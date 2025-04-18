@@ -656,20 +656,14 @@ const injuryProfiles = {
   "gsw_head_critical": {
     description: "Gunshot wound to the head with exposed brain matter and no response to stimuli",
     triageLogic: () => "Expectant",
-   vitals: () => ({
-     pulse: [40, 60],
-     respiratory: [6, 10],
-     bp: [60, 80],
-     spo2: [65, 75],
-     airway: "Airway: Gurgling, unprotected",
-     steth: "Irregular heart sounds, diminished breath sounds"
-   }),
-  deterioration: {
-    pulse: -8,
-    respiratory: "Irregular",
-    bp: +10,
-    steth: "Bradycardia, agonal breathing"
-  }
+    vitals: () => ({
+      pulse: [40, 60],
+      respiratory: [6, 10],
+      bp: [60, 80],
+      spo2: [65, 75],
+      airway: "Airway: Gurgling, unprotected",
+      steth: "Irregular heart sounds, diminished breath sounds"
+    })
   },
   "bilateral_leg_amputations": {
     description: "Bilateral above-knee amputations with signs of hypovolemic shock and altered consciousness",

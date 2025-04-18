@@ -80,7 +80,13 @@ export default function InstructorDashboard() {
           <input
             type="number"
             value={scenarioTimeLimit}
-            onChange={e => setScenarioTimeLimit(Number(e.target.value))}
+            onChange={e => {
+              const value = Number(e.target.value);
+              setScenarioTimeLimit(value);
+              localStorage.setItem("scenarioTimeLimit", value);
+              const channel = new BroadcastChannel("triage-updates");
+              channel.postMessage({ type: "settings", payload: { scenarioTimeLimit: value } });
+            }}
             min={1}
             max={60}
             style={{ width: "60px", marginRight: "1rem" }}
@@ -92,7 +98,13 @@ export default function InstructorDashboard() {
           <input
             type="number"
             value={casualtyCount}
-            onChange={e => setCasualtyCount(Number(e.target.value))}
+            onChange={e => {
+              const value = Number(e.target.value);
+              setCasualtyCount(value);
+              localStorage.setItem("casualtyCount", value);
+              const channel = new BroadcastChannel("triage-updates");
+              channel.postMessage({ type: "settings", payload: { casualtyCount: value } });
+            }}
             min={1}
             max={50}
             style={{ width: "60px", marginRight: "1rem" }}

@@ -1,7 +1,6 @@
-import React from 'react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import CasualtyCard from './CasualtyCard';
-import injuryProfiles from '../data/injuryProfiles.js';
+// Removed unused injuryProfiles import
 import { generateCasualty } from './casualtyGenerator';
 // Manual fixes: Casualty Reveal on Escalation, Prevent Re-Deterioration, Show Snuffy immediately, AAR "Deteriorated?" column, and Vital Reveal Penalty Logging are fully implemented.
 
@@ -17,8 +16,10 @@ const interventionAliases = {
   "IV Fluid NS": ["IV Fluid NS"]
 };
 
-const isStabilized = (casualty) =>
-  (casualty.requiredInterventions || []).every(req => {
+const isStabilized = (casualty) => {
+  if (!Array.isArray(casualty.requiredInterventions) || casualty.requiredInterventions.length === 0) return false;
+
+  return casualty.requiredInterventions.every(req => {
     const aliases = interventionAliases[req] || [req];
     if (req === "Wound Packing") {
       const hasCombat = casualty.interventions.some(i => aliases.includes(i.name) && i.name.includes("Combat Gauze"));
@@ -27,6 +28,7 @@ const isStabilized = (casualty) =>
     }
     return casualty.interventions.some(i => aliases.includes(i.name) && i.count > 0);
   });
+};
 function getRandomInRange(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -43,16 +45,14 @@ function TriageBoard({ aidBag, removeItem, phase }) {
         channel.postMessage({ type: "phase", payload: newPhase }); // forward phase
         window.location.reload();
       }
-      if (event.data?.type === "reset") {
-        localStorage.clear();
-        channel.postMessage({ type: "reset" }); // forward reset
-        window.location.reload();
-      }
       if (event.data?.type === "timer") {
         localStorage.setItem("scenarioEndTime", event.data.payload);
       }
       if (event.data?.type === "notifications") {
         setNotifications(n => [...event.data.payload, ...n].slice(0, 10));
+      }
+      if (event.data?.type === "reset") {
+        window.location.reload();
       }
     };
     return () => channel.close();
@@ -61,7 +61,10 @@ function TriageBoard({ aidBag, removeItem, phase }) {
     const stored = localStorage.getItem("notifications");
     return stored ? JSON.parse(stored) : [];
   });
+  // Added scenarioTimer and penaltyPoints state hooks
   const [scenarioTimer, setScenarioTimer] = useState("--:--");
+  const [penaltyPoints, setPenaltyPoints] = useState(0);
+  const deteriorationTimers = useRef({});
 
   useEffect(() => {
     if (phase === "triage") {
@@ -117,12 +120,12 @@ function TriageBoard({ aidBag, removeItem, phase }) {
       localStorage.setItem("casualties", JSON.stringify(generated));
     }
   }, [phase]);
-  const [penaltyPoints, setPenaltyPoints] = useState(0);
+  // Removed unused penaltyPoints state
   const [revealedIndexes, setRevealedIndexes] = useState(() => {
     const stored = localStorage.getItem("revealedIndexes");
     return stored ? JSON.parse(stored) : [0];
   });
-  const janeDoe = {
+  const janeDoe = useMemo(() => ({
     name: "Jane Doe",
     injury: "Amputation of left leg due to IED blast",
     vitals: {
@@ -141,10 +144,8 @@ function TriageBoard({ aidBag, removeItem, phase }) {
     treatmentTime: null,
     triageTime: null,
     isDemo: true
-  };
-  const generateInitialCasualties = () => {
-    return [janeDoe]; // Always start with just Jane Doe
-  };
+  }), []);
+  // Removed unused generateInitialCasualties function
   const [casualties, setCasualties] = useState(() => {
     const stored = localStorage.getItem("casualties");
     const loaded = stored ? JSON.parse(stored) : [];
@@ -162,7 +163,7 @@ function TriageBoard({ aidBag, removeItem, phase }) {
         setCasualties(parsed);
       }
     }
-  }, [phase]);
+  }, [phase, janeDoe]);
   useEffect(() => {
     localStorage.setItem("notifications", JSON.stringify(notifications));
   }, [notifications]);
@@ -170,6 +171,38 @@ function TriageBoard({ aidBag, removeItem, phase }) {
   useEffect(() => {
     localStorage.setItem("casualties", JSON.stringify(casualties));
   }, [casualties]);
+  
+  useEffect(() => {
+    const checkInterval = () => Math.floor(Math.random() * (60 - 45 + 1) + 45) * 1000;
+    const interval = setInterval(() => {
+      setCasualties(prev => {
+        const updated = prev.map((c, i) => {
+          if (
+            !revealedIndexes.includes(i) ||
+            !Array.isArray(c.requiredInterventions) ||
+            c.requiredInterventions.length === 0 ||
+            c.isDemo
+          ) return c;
+ 
+          const wasStable = c.deteriorated === false;
+          const nowStable = isStabilized(c);
+ 
+          if (!wasStable && nowStable) {
+            setNotifications(n => [`${c.name} has been stabilized.`, ...n].slice(0, 10));
+          }
+ 
+          return nowStable
+            ? { ...c, deteriorated: false }
+            : c;
+        });
+ 
+        localStorage.setItem("casualties", JSON.stringify(updated));
+        return updated;
+      });
+    }, checkInterval());
+ 
+    return () => clearInterval(interval);
+  }, [revealedIndexes]);
 
   useEffect(() => {
     const endTimer = setTimeout(() => {
@@ -274,7 +307,7 @@ function TriageBoard({ aidBag, removeItem, phase }) {
   useEffect(() => {
     const scheduleDeterioration = (index) => {
       const delay = Math.floor(Math.random() * (90 - 45 + 1) + 45) * 1000;
-      return setTimeout(() => {
+      deteriorationTimers.current[index] = setTimeout(() => {
         setCasualties(prev => {
           const updated = prev.map((c, i) => {
             if (i !== index || c.isDemo || !revealedIndexes.includes(i)) return c;
@@ -300,9 +333,8 @@ function TriageBoard({ aidBag, removeItem, phase }) {
 
           localStorage.setItem("casualties", JSON.stringify(updated));
 
-          // Reschedule if still not stabilized
           if (!isStabilized(updated[index])) {
-            timers[index] = scheduleDeterioration(index);
+            scheduleDeterioration(index);
           }
 
           return updated;
@@ -310,15 +342,21 @@ function TriageBoard({ aidBag, removeItem, phase }) {
       }, delay);
     };
 
-    const timers = [];
-
-    casualties.forEach((_, index) => {
-      if (revealedIndexes.includes(index)) {
-        timers[index] = scheduleDeterioration(index);
+    casualties.forEach((c, index) => {
+      if (
+        revealedIndexes.includes(index) &&
+        !deteriorationTimers.current[index] &&
+        Array.isArray(c.requiredInterventions) &&
+        c.requiredInterventions.length > 0
+      ) {
+        scheduleDeterioration(index);
       }
     });
 
-    return () => timers.forEach(timer => clearTimeout(timer));
+    return () => {
+      Object.values(deteriorationTimers.current).forEach(clearTimeout);
+      deteriorationTimers.current = {};
+    };
   }, [casualties, revealedIndexes]);
 
   return (

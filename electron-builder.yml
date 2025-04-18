@@ -1,0 +1,19 @@
+appId: com.triage.trainer
+productName: Triage Trainer
+directories:
+  buildResources: assets
+files:
+  - build/**
+  - main.js
+  - node_modules/serve/**/*
+extraMetadata:
+  main: main.js
+mac:
+  target:
+    - dmg
+    - zip
+win:
+  target:
+    - nsis
+    - zip
+

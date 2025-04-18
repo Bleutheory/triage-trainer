@@ -1,87 +1,132 @@
 import React from 'react';
-import { useState } from 'react';
+// Removed unused useState import
 
 function AidBagSetup({ aidBag, addItem, removeItem, isSetupPhase }) {
-  const initialItems = {
-    Airway: [
-      "Nasopharyngeal Airway ",
-      "Bag-Valve Mask (BVM)",
-      "Pocket Mask",
-      "CRICKIT"
-    ],
-    Breathing: [
-      "HyFin Chest Seal ",
-      "Needle Decompression Kit (14 GA x 3.25 IN)"
-    ],
-    Circulation: [
+  const marchCategories = {
+    "Massive Hemorrhage": [
       "Combat Application Tourniquet (C-A-T)",
       "Combat Gauze Hemostatic Dressing",
       "Compressed Gauze ",
       "Emergency Trauma Dressing - 4 in.",
       "Abdominal Emergency Trauma Dressing",
-      "Triangular Bandage",
       "Elastic Wrap Bandage - 4 in.",
       "Elastic Wrap Bandage - 6 in.",
-      "Surgical Tape Roll - 1 in.",
       "F.A.S.T. 1",
-      "IV Fluid NS"
+      "Surgical Tape Roll - 1 in."
     ],
-    Fractures: [
-      "SAM Splint - Universal",
+    "Airway": [
+      "Nasopharyngeal Airway ",
+      "CRICKIT",
+      "Pocket Mask"
+    ],
+    "Respiratory": [
+      "HyFin Chest Seal ",
+      "Needle Decompression Kit (14 GA x 3.25 IN)",
+      "Bag-Valve Mask (BVM)"
+    ],
+    "Circulation": [
+      "IV Fluid NS",
       "Pelvic Binder",
+      "Triangular Bandage"
+    ],
+    "Head Injury / Hypothermia": [
+      "Emergency Survival Blanket",
+      "Sterile Burn Sheet - 60 x 96 in.",
+      "FOX Eye Shield ",
       "Cervical Spine Collar"
     ],
-    "Eyes & Face": [
-      "FOX Eye Shield "
-    ],
-    Burns: [
-      "Sterile Burn Sheet - 60 x 96 in.",
-      "IF Fludid LR"
-    ],
     "PPE & Misc": [
-      "Emergency Survival Blanket",
-      "Flexible Adhesive Bandages",
-      "PPE Kit - Gloves, Mask, Eye Protection"
+      "PPE Kit - Gloves, Mask, Eye Protection",
+      "Flexible Adhesive Bandages"
     ]
   };
 
+  const [openCategories, setOpenCategories] = React.useState(() => {
+    const initial = {};
+    for (const category of Object.keys(marchCategories)) {
+      initial[category] = true;
+    }
+    return initial;
+  });
+
   return (
-    <section style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem", padding: "1rem" }}>
-      <div>
-        <h3>Item Categories</h3>
-        <div style={{ maxHeight: "500px", overflowY: "auto", border: "1px solid #ccc", padding: "0.5rem" }}>
-          {Object.entries(initialItems).map(([category, items]) => (
-            <details key={category} style={{ marginBottom: "1rem" }}>
-              <summary style={{ fontWeight: "bold", marginBottom: "0.5rem" }}>{category}</summary>
-              <ul style={{ listStyle: "none", paddingLeft: 0 }}>
-                {items.map(item => (
-                  <li
-                    key={item}
-                    style={{ margin: "0.25rem 0", cursor: "pointer" }}
-                    draggable={isSetupPhase}
-                    onDragStart={(e) => e.dataTransfer.setData("text/plain", item)}
-                    onClick={() => isSetupPhase && addItem(item)}
-                  >
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </details>
-          ))}
-        </div>
+    <section style={{ padding: "2rem", backgroundColor: "#1A202C", color: "#F7FAFC", fontFamily: "'Segoe UI', sans-serif" }}>
+      <h2 style={{ fontSize: "1.4rem", marginBottom: "1rem", color: "#EDF2F7" }}>🧰 Aid Bag Packing</h2>
+      <div style={{ marginBottom: "2rem" }}>
+        {Object.entries(marchCategories).map(([category, items]) => {
+          const open = openCategories[category];
+          const toggleOpen = () =>
+            setOpenCategories(prev => ({ ...prev, [category]: !prev[category] }));
+          return (
+            <div key={category} style={{ marginBottom: "1rem" }}>
+              <button
+                onClick={toggleOpen}
+                style={{
+                  width: "100%",
+                  textAlign: "left",
+                  padding: "0.5rem",
+                  backgroundColor: "#2D3748",
+                  border: "none",
+                  color: "#F7FAFC",
+                  fontWeight: "bold",
+                  fontSize: "1.1rem",
+                  cursor: "pointer",
+                  borderBottom: "1px solid #4A5568"
+                }}
+              >
+                {open ? "▼" : "▶"} {category}
+              </button>
+              {open && (
+                <div style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "0.5rem",
+                  marginTop: "0.5rem"
+                }}>
+                  {items.map(item => (
+                    <div
+                      key={item}
+                      style={{
+                        padding: "6px 10px",
+                        backgroundColor: "#4A5568",
+                        borderRadius: "4px",
+                        cursor: "pointer"
+                      }}
+                      onMouseOver={(e) => e.currentTarget.style.backgroundColor = "#2C7A7B"}
+                      onMouseOut={(e) => e.currentTarget.style.backgroundColor = "#4A5568"}
+                      draggable={isSetupPhase}
+                      onDragStart={(e) => e.dataTransfer.setData("text/plain", item)}
+                      onClick={() => isSetupPhase && addItem(item)}
+                    >
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
-      <div>
-        <h3>Current Aid Bag Contents</h3>
-        <div style={{ border: "1px solid #ccc", padding: "0.5rem", maxHeight: "500px", overflowY: "auto" }}>
+
+      <main style={{ marginTop: "2rem" }}>
+        <h3 style={{ fontSize: "1.3rem", marginBottom: "1rem" }}>🎒 Current Aid Bag Contents</h3>
+        <div style={{ backgroundColor: "#2D3748", borderRadius: "8px", padding: "1rem", maxHeight: "80vh", overflowY: "auto" }}>
           <p>Total Items: {Object.values(aidBag).reduce((sum, count) => sum + count, 0)}</p>
           <ul style={{ listStyle: "none", paddingLeft: 0 }}>
             {Object.entries(aidBag).map(([item, count]) => (
-              <li key={item} style={{ marginBottom: "0.5rem" }}>
-                {item} x{count}{" "}
+              <li key={item} style={{ marginBottom: "0.75rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span>{item} x{count}</span>
                 <button
                   onClick={() => removeItem(item)}
-                  style={{ marginLeft: "0.5rem" }}
                   disabled={!isSetupPhase}
+                  style={{
+                    backgroundColor: "#E53E3E",
+                    color: "#F7FAFC",
+                    border: "none",
+                    padding: "4px 8px",
+                    borderRadius: "4px",
+                    cursor: "pointer"
+                  }}
                 >
                   Remove
                 </button>
@@ -89,7 +134,7 @@ function AidBagSetup({ aidBag, addItem, removeItem, isSetupPhase }) {
             ))}
           </ul>
         </div>
-      </div>
+      </main>
     </section>
   );
 }

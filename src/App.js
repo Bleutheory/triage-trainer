@@ -1,10 +1,9 @@
 import React from 'react';
-import './App.css';
 import './style.css';
 import { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import InstructorDashboard from './components/InstructorDashboard';
-import { generateCasualty, generateUniqueCasualties } from './components/casualtyGenerator';
+import { generateUniqueCasualties } from './components/casualtyGenerator';
 import AidBagSetup from './components/AidBagSetup';
 import ScenarioBrief from './components/ScenarioBrief';
 import TriagePhase from './components/TriagePhase';
@@ -15,14 +14,19 @@ function App() {
   const [aidBag, setAidBag] = useState({});
   const [notifications, setNotifications] = useState([]);
   const [currentPage, setCurrentPage] = useState("setup");
-  const [startTime] = useState(Date.now());
+  // Removed unused startTime variable
   const [timerLabel, setTimerLabel] = useState("Timer: --:--");
   const [phase, setPhase] = useState("idle"); // "idle", "packing", "brief", "triage"
+  // Theme state removed
+
+  useEffect(() => {
+    // Theme effect removed
+  }, []);
   const [resupplyInProgress, setResupplyInProgress] = useState(false);
   useEffect(() => {
     const channel = new BroadcastChannel("triage-updates");
     channel.onmessage = (event) => {
-      switch(event.data?.type) {
+    switch(event.data?.type) {
         case "phase":
           setPhase(event.data.payload);
           if (event.data.payload === "triage") navigateTo("triage");
@@ -35,6 +39,8 @@ function App() {
           break;
         case "aidBag":
           setAidBag(event.data.payload);
+          break;
+        default:
           break;
       }
     };
@@ -71,8 +77,9 @@ function App() {
       }, 1000);
     } else if (phase === "triage") {
       const endTime = Number(localStorage.getItem("scenarioEndTime"));
+      if (timerRef.current) clearInterval(timerRef.current);
       timerRef.current = setInterval(() => {
-        const remaining = endTime - Date.now();
+        // removed unused variable 'remaining'
         const elapsed = Math.max(0, Math.floor((Date.now() - (endTime - (Number(localStorage.getItem("scenarioTimeLimit")) || 20) * 60000)) / 1000));
         const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
         const seconds = (elapsed % 60).toString().padStart(2, '0');

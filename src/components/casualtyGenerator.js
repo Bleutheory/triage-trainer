@@ -8,7 +8,7 @@ function getRandomInRange(min, max) {
 
 const ranks = ["PVT", "PV2", "PFC", "SPC", "SGT", "1LT", "CPT"];
 let usedKeys = new Set();
-const lastNames = ["Smith", "Johnson", "Taylor", "White", "Lee", "Martinez", "Brown"];
+const lastNames = ["Smith", "Johnson", "Taylor", "White", "Lee", "Martinez", "Stapleton", "Brown"];
 
 export function generateName() {
   return `${ranks[Math.floor(Math.random() * ranks.length)]} ${lastNames[Math.floor(Math.random() * lastNames.length)]}`;

@@ -1,8 +1,8 @@
 import React from 'react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 function CasualtyCard({ aidBag, removeItem, casualty, onTriageChange, isHighlighted }) {
-  const [startTime] = useState(Date.now());
+  // Removed unused startTime variable
   const [showVitals, setShowVitals] = useState(false);
   const [visibleVitals, setVisibleVitals] = useState({
     pulse: false,
