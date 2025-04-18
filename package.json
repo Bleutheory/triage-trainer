@@ -43,7 +43,14 @@
     ]
   },
   "devDependencies": {
+    "@types/node": "^22.14.1",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
     "electron": "^33.0.0",
-    "electron-builder": "^26.0.12"
+    "electron-builder": "^26.0.12",
+    "typescript": "^5.8.3"
+  },
+  "resolutions": {
+  "minimatch": "9.0.0"
   }
 }
