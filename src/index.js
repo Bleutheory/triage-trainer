@@ -1,12 +1,19 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
+import { AppProvider } from './context/AppContext';
 import App from './App';
+import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <App />
+    <AppProvider>
+-     <App />
++     <ErrorBoundary>
++       <App />
++     </ErrorBoundary>
+    </AppProvider>
   </React.StrictMode>
 );
 

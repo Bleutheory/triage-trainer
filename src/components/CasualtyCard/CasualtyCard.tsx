@@ -1,30 +1,49 @@
-import React from 'react';
-import { useState } from 'react';
+// @ts-ignore: allow importing CSS modules
+import styles from './CasualtyCard.module.css';
+import React, { FC, useState } from 'react';
+import { Casualty, Vitals } from '../../types';;
+interface CasualtyCardProps {
+  aidBag: Record<string, number>;
+  removeItem: (item: string) => void;
+  casualty: Casualty;
+  onTriageChange: (value: string) => void;
+  isHighlighted: boolean;
+applyItem: (item: string) => void;
+}
 
-function CasualtyCard({ aidBag, removeItem, casualty, onTriageChange, isHighlighted }) {
-  // Removed unused startTime variable
+const CasualtyCard: FC<CasualtyCardProps> = ({ aidBag, removeItem, casualty, onTriageChange, isHighlighted, applyItem }) => {
   const [showVitals, setShowVitals] = useState(false);
-  const [visibleVitals, setVisibleVitals] = useState({
+  const [visibleVitals, setVisibleVitals] = useState<Record<keyof Vitals, boolean>>(() => ({
     pulse: false,
     respiratory: false,
     bp: false,
     spo2: false,
     airway: false,
     steth: false
-  });
-
-
-
-
+  }));
+  
+  React.useEffect(() => {
+    const stabilized = (casualty.requiredInterventions || []).every(req =>
+      casualty.interventions.some(i => i.name === req && i.count > 0)
+    );
+    if (stabilized && casualty.treatmentTime == null) {
+      const updated = JSON.parse(localStorage.getItem("casualties") || "[]").map((c: Casualty) =>
+        c.name === casualty.name
+          ? { ...c, treatmentTime: Math.floor((Date.now() - c.startTime) / 1000) }
+          : c
+      );
+      localStorage.setItem("casualties", JSON.stringify(updated));
+      const channel = new BroadcastChannel("triage-updates");
+      channel.postMessage({ type: "casualties", payload: updated });
+    }
+  }, [casualty]);
 
   const triageClass = casualty.isDemo
     ? 'casualty-card demo-card'
     : casualty.triage
     ? `casualty-card triage-${casualty.triage.toLowerCase()}`
     : 'casualty-card';
-  const finalClass = `${triageClass} ${isHighlighted ? 'pulsate' : ''}`;
-
-  const labelMap = {
+  const labelMap: Record<keyof Vitals, string> = {
     pulse: "Request Pulse",
     respiratory: "Request Respiratory Rate",
     bp: "Request Blood Pressure",
@@ -34,15 +53,29 @@ function CasualtyCard({ aidBag, removeItem, casualty, onTriageChange, isHighligh
   };
 
   return (
-    <div className={finalClass}>
+    <div className={triageClass}>
       <h3>{casualty.name}</h3>
       <p><strong>Injury:</strong> {casualty.injury}</p>
       <div>
         <label htmlFor={`triage-${casualty.name}`}>Triage Category: </label>
+
         <select
           id={`triage-${casualty.name}`}
           value={casualty.triage || ""}
-          onChange={(e) => onTriageChange(e.target.value)}
+          onChange={(e) => {
+            const newTriage = e.target.value;
+            const updated = JSON.parse(localStorage.getItem("casualties") || "[]").map((c: Casualty) =>
+              c.name === casualty.name
+                ? { ...c, triage: newTriage, triageTime: Math.floor((Date.now() - c.startTime) / 1000) }
+                : c
+            );
+            localStorage.setItem("casualties", JSON.stringify(updated));
+
+            const channel = new BroadcastChannel("triage-updates");
+            channel.postMessage({ type: "casualties", payload: updated });
+
+            onTriageChange(newTriage);
+          }}
           style={{
             backgroundColor: '#4A5568',
             color: '#F7FAFC',
@@ -59,7 +92,6 @@ function CasualtyCard({ aidBag, removeItem, casualty, onTriageChange, isHighligh
           <option value="Expectant">Expectant</option>
         </select>
       </div>
-
 
       <div style={{ marginTop: '10px' }}>
         <button
@@ -78,13 +110,13 @@ function CasualtyCard({ aidBag, removeItem, casualty, onTriageChange, isHighligh
         </button>
         {showVitals && (
           <ul>
-            {Object.entries(labelMap).map(([key, label]) => (
+            {(Object.entries(labelMap) as [keyof Vitals, string][]).map(([key, label]) => (
               <li key={key}>
                 <button
                   onClick={() => {
                     setVisibleVitals(v => ({ ...v, [key]: true }));
                     const current = Number(localStorage.getItem("penaltyPoints") || 0);
-                    localStorage.setItem("penaltyPoints", current + 20);
+                    localStorage.setItem("penaltyPoints", String(current + 20));
                     console.log(`${casualty.name}: +20 penalty points for requesting ${key}`);
                   }}
                   disabled={visibleVitals[key]}
@@ -106,7 +138,6 @@ function CasualtyCard({ aidBag, removeItem, casualty, onTriageChange, isHighligh
         )}
       </div>
 
-
       <div>
         <h4>Interventions Applied:</h4>
         <ul>
@@ -115,7 +146,12 @@ function CasualtyCard({ aidBag, removeItem, casualty, onTriageChange, isHighligh
           ))}
         </ul>
       </div>
-
+      <div>
+        <strong>Stabilized:</strong>{" "}
+        {(casualty.requiredInterventions || []).every(req =>
+          casualty.interventions.some(i => i.name === req && i.count > 0)
+        ) ? "Yes" : "No"}
+      </div>
     </div>
   );
 }

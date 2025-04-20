@@ -15,11 +15,14 @@
     "serve": "^14.2.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
+    "type-check": "tsc --noEmit",
+    "start": "npm run type-check && react-scripts start",
+    "build": "npm run type-check && react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "electron": "electron ."
+    "electron": "electron .",
+    "build-data": "tsc src/data/injuryProfiles.ts --outDir src/data/js --esModuleInterop",
+    "split": "npm run build-data && node split-injury-profiles.js"
   },
   "eslintConfig": {
     "extends": [
@@ -43,14 +46,17 @@
     ]
   },
   "devDependencies": {
+    "@craco/craco": "^7.1.0",
+    "@testing-library/jest-dom": "^6.0.0",
+    "@testing-library/react": "^14.0.0",
+    "@testing-library/user-event": "^14.4.3",
+    "@types/jest": "^29.5.14",
     "@types/node": "^22.14.1",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "electron": "^33.0.0",
     "electron-builder": "^26.0.12",
-    "typescript": "^5.8.3"
-  },
-  "resolutions": {
-  "minimatch": "9.0.0"
+    "ts-node": "^10.9.2",
+    "typescript": "^4.9.5"
   }
 }

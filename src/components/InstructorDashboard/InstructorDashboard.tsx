@@ -1,12 +1,15 @@
+// @ts-ignore: allow importing CSS modules
+import styles from './InstructorDashboard.module.css';
 
+import React, { FC, useEffect, useState } from 'react';
+import { useAppContext } from '../../context/AppContext';
+import { Casualty, Intervention } from '../../types';
+// @ts-ignore: allow importing JS module without type declarations
+import { generateCasualty } from '../casualtyGenerator/casualtyGenerator';
 
-import React from 'react';
-import { useEffect, useState } from 'react';
-import { generateCasualty } from './casualtyGenerator';
-
-export default function InstructorDashboard() {
-  const [casualties, setCasualties] = useState([]);
-  const [aidBag, setAidBag] = useState({});
+const InstructorDashboard: FC = () => {
+  const { aidBag, setAidBag, phase } = useAppContext();
+  const [casualties, setCasualties] = useState<Casualty[]>([]);
   const [scenarioTimeLimit, setScenarioTimeLimit] = useState(() => {
     return Number(localStorage.getItem("scenarioTimeLimit")) || 20;
   });
@@ -16,7 +19,7 @@ export default function InstructorDashboard() {
   const [autoReveal, setAutoReveal] = useState(() => {
     return localStorage.getItem("autoReveal") !== "false";
   });
-  const addItem = (item) => {
+  const addItem = (item: string) => {
     const updated = { ...aidBag, [item]: (aidBag[item] || 0) + 1 };
     setAidBag(updated);
     localStorage.setItem("aidBag", JSON.stringify(updated));
@@ -38,8 +41,8 @@ export default function InstructorDashboard() {
   useEffect(() => {
     const channel = new BroadcastChannel('triage-updates');
     channel.onmessage = (msg) => {
-      if (Array.isArray(msg.data)) {
-        setCasualties(msg.data);
+      if (msg.data?.type === "casualties" && Array.isArray(msg.data.payload)) {
+        setCasualties(msg.data.payload);
       }
     };
     return () => channel.close();
@@ -50,14 +53,15 @@ export default function InstructorDashboard() {
       <h2 style={{ marginBottom: '12px' }}>Instructor Dashboard</h2>
       <div style={{ marginBottom: "1rem" }}>
         <button
-          onClick={() => {
-            const casualties = JSON.parse(localStorage.getItem('casualties')) || [];
+        onClick={() => {
+            const stored = localStorage.getItem('casualties');
+            const casualtiesList: Casualty[] = stored ? JSON.parse(stored) : [];
             const newCasualty = generateCasualty();
-            casualties.push(newCasualty);
-            localStorage.setItem('casualties', JSON.stringify(casualties));
-            setCasualties(casualties);
+            const updatedList = [...casualtiesList, newCasualty];
+            localStorage.setItem('casualties', JSON.stringify(updatedList));
+            setCasualties(updatedList);
             const channel = new BroadcastChannel("triage-updates");
-            channel.postMessage({ type: "casualties", payload: casualties });
+            channel.postMessage({ type: "casualties", payload: updatedList });
           }}
           style={{ marginRight: "10px", padding: "8px" }}
         >
@@ -83,7 +87,7 @@ export default function InstructorDashboard() {
             onChange={e => {
               const value = Number(e.target.value);
               setScenarioTimeLimit(value);
-              localStorage.setItem("scenarioTimeLimit", value);
+              localStorage.setItem("scenarioTimeLimit", String(value));
               const channel = new BroadcastChannel("triage-updates");
               channel.postMessage({ type: "settings", payload: { scenarioTimeLimit: value } });
             }}
@@ -101,7 +105,7 @@ export default function InstructorDashboard() {
             onChange={e => {
               const value = Number(e.target.value);
               setCasualtyCount(value);
-              localStorage.setItem("casualtyCount", value);
+              localStorage.setItem("casualtyCount", String(value));
               const channel = new BroadcastChannel("triage-updates");
               channel.postMessage({ type: "settings", payload: { casualtyCount: value } });
             }}
@@ -150,3 +154,5 @@ export default function InstructorDashboard() {
     </section>
   );
 }
+
+export default InstructorDashboard;

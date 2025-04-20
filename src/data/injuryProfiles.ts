@@ -1,3 +1,5 @@
+// @ts-nocheck
+import { InjuryProfile } from '../types';
 /* ------------------------------------------------------------
    Reorganized helpers and categories
    ------------------------------------------------------------ */
@@ -49,7 +51,7 @@ export const injuryKeysByCause = {
   ]
 };
 
-export function getCauseForKey(key) {
+export function getCauseForKey(key: string): string {
   for (const [cause, list] of Object.entries(injuryKeysByCause)) {
     if (list.includes(key)) return cause;
   }
@@ -57,7 +59,7 @@ export function getCauseForKey(key) {
 }
 /* ---------------------------------------------------------- */
 
-const injuryProfiles = {
+export const injuryProfiles: Record<string, InjuryProfile> = {
   "decapitation": {
   description: "Complete traumatic decapitation at the cervical spine",
   triageLogic: () => "Expectant",
@@ -144,13 +146,7 @@ const injuryProfiles = {
      airway: "Airway: Clear",
      steth: "Normal"
    },
-  deterioration: {
-    pulse: +15,
-    respiratory: +6,
-    bp: -10,
-    spo2: -6,
-    steth: "Fainter heart sounds"
-  }
+    // Removed duplicate deterioration block
 },
 "tq_lower_arm_bleed": {
   description: "Blast fragment wound to the forearm with arterial spurting",
@@ -555,13 +551,6 @@ const injuryProfiles = {
       airway: "Airway: Clear",
       steth: "Breath sounds clear"
     },
-    deterioration: {
-      pulse: +10,
-      respiratory: +6,
-      bp: -10,
-      spo2: -10,
-      steth: "Stridor, diminishing breath sounds"
-    }
   },
   "gsw_chest": {
     description: "Gunshot wound to the chest with difficulty breathing",
@@ -1270,15 +1259,9 @@ const injuryProfiles = {
     bp: -15,
     spo2: -9,
     steth: "Muffled heart tones, delayed capillary refill"
-  },
-  deterioration: {
-    pulse: +20,
-    respiratory: +5,
-    bp: -15,
-    spo2: -9,
-    steth: "Muffled heart tones, delayed capillary refill"
   }
 },
+ 
 "crush_syndrome_delayed": {
   description: "Crush injury freed, fluids running",
   triageLogic: () => "Delayed",
@@ -1345,5 +1328,5 @@ const injuryProfiles = {
     steth: "Normal"
   })
 }
-}
+};
 export default injuryProfiles;

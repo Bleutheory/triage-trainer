@@ -1,16 +1,18 @@
-import React from 'react';
-import { useEffect, useState } from 'react';
+// @ts-ignore: allow importing CSS modules
+import styles from './AARPage.module.css';
+import React, { useEffect, useState, FC } from 'react';
+import { Casualty } from '../../types';
 
-export default function AARPage() {
-  const [casualties, setCasualties] = useState([]);
+const AARPage: FC = () => {
+  const [casualties, setCasualties] = useState<Casualty[]>([]);
 
   useEffect(() => {
     const stored = localStorage.getItem('casualties');
     const revealed = localStorage.getItem('revealedIndexes');
     if (stored && revealed) {
-      const casualtiesData = JSON.parse(stored);
-      const revealedIndexes = new Set(JSON.parse(revealed));
-      setCasualties(casualtiesData.filter((_, idx) => revealedIndexes.has(idx)));
+      const casualtiesData: Casualty[] = JSON.parse(stored);
+      const revealedIndexes: Set<number> = new Set<number>(JSON.parse(revealed));
+      setCasualties(casualtiesData.filter((_: Casualty, idx: number) => revealedIndexes.has(idx)));
     }
   }, []);
 
@@ -50,3 +52,4 @@ export default function AARPage() {
     </section>
   );
 }
+export default AARPage;

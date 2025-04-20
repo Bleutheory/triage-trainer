@@ -1,0 +1,83 @@
+.container {
+    padding: 2rem;
+    background-color: #1A202C;
+    color: #F7FAFC;
+    font-family: 'Segoe UI', sans-serif;
+  }
+  
+  .title {
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+    color: #EDF2F7;
+  }
+  
+  .categoriesContainer {
+    margin-bottom: 2rem;
+  }
+  
+  .categorySection {
+    margin-bottom: 1rem;
+  }
+  
+  .categoryButton {
+    width: 100%;
+    text-align: left;
+    padding: 0.5rem;
+    background-color: #2D3748;
+    border: none;
+    color: #F7FAFC;
+    font-weight: bold;
+    font-size: 1.1rem;
+    cursor: pointer;
+    border-bottom: 1px solid #4A5568;
+  }
+  
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+  
+  .item {
+    padding: 6px 10px;
+    background-color: #4A5568;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .item:hover {
+    background-color: #2C7A7B;
+  }
+  
+  .mainSection {
+    margin-top: 2rem;
+  }
+  
+  .aidBagContainer {
+    background-color: #2D3748;
+    border-radius: 8px;
+    padding: 1rem;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  
+  .list {
+    list-style: none;
+    padding-left: 0;
+  }
+  
+  .listItem {
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .removeButton {
+    background-color: #E53E3E;
+    color: #F7FAFC;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+  }

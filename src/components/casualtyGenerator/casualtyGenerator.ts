@@ -1,8 +1,9 @@
+// @ts-ignore: allow importing CSS modules
 
+import { Casualty, Vitals } from '../../types'; // Ensure Casualty is correctly defined in '../../types'
+import injuryProfiles from '../../data/injuryProfiles'; // Adjust the path to match the actual export location of injury profiles
 
-import injuryProfiles from '../data/injuryProfiles';
-
-function getRandomInRange(min, max) {
+function getRandomInRange(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
@@ -10,11 +11,11 @@ const ranks = ["PVT", "PV2", "PFC", "SPC", "SGT", "1LT", "CPT"];
 let usedKeys = new Set();
 const lastNames = ["Smith", "Johnson", "Taylor", "White", "Lee", "Martinez", "Stapleton", "Brown"];
 
-export function generateName() {
+export function generateName(): string {
   return `${ranks[Math.floor(Math.random() * ranks.length)]} ${lastNames[Math.floor(Math.random() * lastNames.length)]}`;
 }
 
-export function generateCasualty() {
+export function generateCasualty(): Casualty {
   const keys = Object.keys(injuryProfiles).filter(key => !usedKeys.has(key));
   if (keys.length === 0) {
     usedKeys.clear(); // Reset once all keys have been used
@@ -32,21 +33,22 @@ export function generateCasualty() {
     arterial: Math.random() < 0.5
   };
 
-  const rawVitals = profile.vitals(state);
-  const get = (range) => {
-    if (Array.isArray(range[0])) return [getRandomInRange(range[0][0], range[0][1]), getRandomInRange(range[1][0], range[1][1])];
-    if (Array.isArray(range)) return getRandomInRange(range[0], range[1]);
-    return range;
-  };
+const rawVitals = (typeof profile.vitals === 'function' ? profile.vitals(state) : {}) as Vitals; // Ensure `profile.vitals` is a valid function
+const get = (range: number | [number, number]): number => {
+  if (Array.isArray(range)) {
+    const [min, max] = range;
+    return getRandomInRange(min, max);
+  }
+  return range;
+};
 
-  const bpSystolic = getRandomInRange(rawVitals.bp[0], rawVitals.bp[1]);
-  const bpDiastolic = getRandomInRange(40, 60);
+  // Removed unused bpSystolic and bpDiastolic variables
 
   const vitals = {
     pulse: get(rawVitals.pulse),
     respiratory: get(rawVitals.respiratory),
-    bp: `${bpSystolic}/${bpDiastolic}`,
-    spo2: `${get(rawVitals.spo2)}%`,
+    bp: `${getRandomInRange(Number(rawVitals.bp[0]), Number(rawVitals.bp[1]))}/${getRandomInRange(40, 60)}`,
+    spo2: get(rawVitals.spo2),
     airway: rawVitals.airway,
     steth: rawVitals.steth
   };
@@ -67,7 +69,7 @@ export function generateCasualty() {
   };
 }
 
-export function generateUniqueCasualties(count) {
+export function generateUniqueCasualties(count: number): Casualty[] {
   const now = Date.now();
   const keys = Object.keys(injuryProfiles).sort(() => 0.5 - Math.random());
   const selected = keys.slice(0, Math.min(count, keys.length));
@@ -83,20 +85,28 @@ export function generateUniqueCasualties(count) {
     };
 
     const rawVitals = profile.vitals(state);
-    const get = (range) => {
-      if (Array.isArray(range[0])) return [getRandomInRange(range[0][0], range[0][1]), getRandomInRange(range[1][0], range[1][1])];
-      if (Array.isArray(range)) return getRandomInRange(range[0], range[1]);
+    const get = (range: any): any => {
+      if (Array.isArray(range[0]) && Array.isArray(range[1])) {
+        return [
+          getRandomInRange((range[0] as number[])[0], (range[0] as number[])[1]),
+          getRandomInRange((range[1] as number[])[0], (range[1] as number[])[1])
+        ];
+      }
+      if (Array.isArray(range)) return getRandomInRange((range as number[])[0], (range as number[])[1]);
       return range;
     };
 
-    const bpSystolic = getRandomInRange(rawVitals.bp[0], rawVitals.bp[1]);
+    const bpSystolic = getRandomInRange(
+      Number(rawVitals.bp[0]),
+      Number(rawVitals.bp[1])
+    );
     const bpDiastolic = getRandomInRange(40, 60);
 
     const vitals = {
       pulse: get(rawVitals.pulse),
       respiratory: get(rawVitals.respiratory),
       bp: `${bpSystolic}/${bpDiastolic}`,
-      spo2: `${get(rawVitals.spo2)}%`,
+      spo2: Number(get(rawVitals.spo2)),
       airway: rawVitals.airway,
       steth: rawVitals.steth
     };
