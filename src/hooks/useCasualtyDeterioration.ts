@@ -45,8 +45,11 @@ export default function useCasualtyDeterioration({
     });
 
     return () => {
-      Object.values(timers.current).forEach(clearTimeout);
-      timers.current = {};
+      // Only clear timers when phase exits triage
+      if (phase !== 'triage') {
+        Object.values(timers.current).forEach(clearTimeout);
+        timers.current = {};
+      }
     };
   }, [casualties, revealedIndexes, phase, onUpdate, onNotify]);
 }

@@ -1,5 +1,4 @@
 // @ts-ignore: allow importing CSS modules
-import styles from './TriagePhase.module.css';
 import React, { FC } from 'react';
 import { useAppContext } from '../../context/AppContext';
 // @ts-ignore: Allow importing JS module without type declarations
@@ -9,9 +8,13 @@ const TriagePhase: FC = () => {
   const { aidBag, setAidBag, notifications, setNotifications, phase } = useAppContext();
 
   const removeItem = (item: string) => {
-    setAidBag((prev: Record<string, number>) => {
+    setAidBag(prev => {
       const updated = { ...prev };
-      delete updated[item];
+      if (updated[item] > 1) {
+        updated[item] = updated[item] - 1;
+      } else {
+        delete updated[item];
+      }
       return updated;
     });
   };

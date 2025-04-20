@@ -1,5 +1,4 @@
 // @ts-ignore: allow importing CSS modules
-import styles from './ErrorBoundary.module.css';
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 
 interface ErrorBoundaryProps {

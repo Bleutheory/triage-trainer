@@ -1,14 +1,9 @@
-// @ts-ignore: allow importing CSS modules
-import styles from './TriageBoard.module.css';
-/* eslint-disable @typescript-eslint/no-unused-vars, react-hooks/exhaustive-deps */
-// @ts-nocheck
-import React, { FC, useEffect, useState, useMemo, useRef } from 'react';
+import React, { FC } from 'react';
+import NotificationPanel from './NotificationPanel';
 import { Casualty, Intervention } from '../../types';
 import { generateCasualty } from '../casualtyGenerator/casualtyGenerator';
-import InstructorDashboard from '../InstructorDashboard/InstructorDashboard';
-import useScenarioTimer from '../../hooks/useScenarioTimer';
 import useCasualtyDeterioration from '../../hooks/useCasualtyDeterioration';
-import CasualtyCard from '../CasualtyCard/CasualtyCard';
+import CasualtyGrid from './CasualtyGrid';
 
 interface TriageBoardProps {
   aidBag: Record<string, number>;
@@ -29,7 +24,7 @@ const interventionAliases: Record<string, string[]> = {
 };
 
 export const isStabilized = (casualty: Casualty): boolean => {
-  if (!Array.isArray(casualty.requiredInterventions) || casualty.requiredInterventions.length === 0) return false;
+  if (!Array.isArray(casualty.requiredInterventions) || casualty.requiredInterventions.length === 0) return true;
 
   return casualty.requiredInterventions.every((req: string) => {
     const aliases = interventionAliases[req] || [req];
@@ -42,23 +37,33 @@ export const isStabilized = (casualty: Casualty): boolean => {
   });
 };
 
-function getRandomInRange(min: number, max: number) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
 const TriageBoard: FC<TriageBoardProps> = ({
   aidBag,
   removeItem,
   notifications,
   setNotifications,
   phase
-}) => {
-  const showInstructor = phase === "instructor";
+}) => { 
   console.log("LocalStorage casualties:", JSON.parse(localStorage.getItem("casualties") || "[]"));
-  useEffect(() => {
+  
+  const RESUPPLY_COOLDOWN = 120000; // 2 minutes
+  const [resupplyCountdown, setResupplyCountdown] = React.useState(0);
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      const last = Number(localStorage.getItem("lastResupplyTime") || "0");
+      const elapsed = Date.now() - last;
+      setResupplyCountdown(elapsed < RESUPPLY_COOLDOWN ? RESUPPLY_COOLDOWN - elapsed : 0);
+    }, 500);
+    return () => clearInterval(interval);
+  }, []);
+  const resupplyDisabled = resupplyCountdown > 0;
+  const disableLabel = resupplyDisabled
+    ? `${Math.ceil(resupplyCountdown / 1000)}s`
+    : '';
+  
+  React.useEffect(() => {
     const channel = new BroadcastChannel("triage-updates");
     channel.onmessage = (event) => {
-      const channel = new BroadcastChannel("triage-updates");
       if (event.data?.type === "phase") {
         const newPhase = event.data.payload;
         localStorage.setItem("phase", newPhase);
@@ -76,13 +81,13 @@ const TriageBoard: FC<TriageBoardProps> = ({
       }
     };
     return () => channel.close();
-  }, []);
+  }, [setNotifications]);
 
-  const [revealedIndexes, setRevealedIndexes] = useState<number[]>(() => {
+  const [revealedIndexes, setRevealedIndexes] = React.useState<number[]>(() => {
     const stored = localStorage.getItem("revealedIndexes");
     return stored ? (JSON.parse(stored) as number[]) : [0];
   });
-  const janeDoe = useMemo(() => ({
+  const janeDoe = React.useMemo(() => ({
     name: "Jane Doe",
     injury: "Amputation of left leg due to IED blast",
     vitals: {
@@ -102,40 +107,50 @@ const TriageBoard: FC<TriageBoardProps> = ({
     triageTime: null,
     isDemo: true
   }), []);
-  const [casualties, setCasualties] = useState<Casualty[]>(() => {
+  const [casualties, setCasualties] = React.useState<Casualty[]>(() => {
     const stored = localStorage.getItem("casualties");
     const loaded = stored ? (JSON.parse(stored) as Casualty[]) : [];
     return loaded.length === 0 ? [janeDoe] : loaded;
   });
-  const endTime = Number(localStorage.getItem('scenarioEndTime') || 0);
-  const scenarioTimer = useScenarioTimer(endTime, phase as 'setup' | 'scenario-brief' | 'triage' | 'aar');
   useCasualtyDeterioration({
     casualties,
     revealedIndexes,
     phase,
     onUpdate: setCasualties,
-    onNotify: (msg: string) => setNotifications(n => [msg, ...n].slice(0,10)),
+    onNotify: msg => setNotifications(n => [msg, ...n].slice(0,10)),
   });
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (phase === "triage") {
-      setRevealedIndexes([0]);
-
-      const revealSchedule = casualties.map((_, index) => {
-        const delay = index === 0 ? getRandomInRange(25, 30) : getRandomInRange(45, 60);
-        return delay * 1000; // Convert to milliseconds
-      });
-
-      revealSchedule.forEach((delay, index) => {
-        setTimeout(() => {
-          setRevealedIndexes((prev) => [...prev, index]);
-          localStorage.setItem("revealedIndexes", JSON.stringify([...prev, index]));
-        }, delay);
-      });
+      const stored = localStorage.getItem("casualties");
+      const existing = stored ? JSON.parse(stored) : [];
+  
+      if (existing.length > 0) {
+        setCasualties(existing);
+        console.log("Restoring casualties from localStorage:", existing);
+        const revealedStored = localStorage.getItem("revealedIndexes");
+        const revealed = revealedStored ? JSON.parse(revealedStored) : [0];
+        setRevealedIndexes(revealed);
+        console.log("Restoring revealedIndexes:", revealed);
+        const autoReveal = localStorage.getItem("autoReveal") !== "false";
+        if (autoReveal) {
+          const totalDuration = 15 * 60 * 1000;
+          const randomDelays = Array.from({ length: existing.length - 1 }, () =>
+            Math.floor(Math.random() * totalDuration)
+          ).sort((a, b) => a - b);
+          console.log("Scheduling casualty reveals:", randomDelays.map((d, i) => `Index ${i + 1} in ${d / 1000}s`));
+          randomDelays.forEach((delay, i) => {
+            setTimeout(() => {
+              console.log(`Revealing casualty index ${i + 1}`);
+              setRevealedIndexes(prev => [...new Set([...prev, i + 1])]);
+            }, delay);
+          });
+        }
+      }
     }
   }, [phase, casualties]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (phase !== "triage") {
       const stored = localStorage.getItem("casualties");
       const parsed = stored ? JSON.parse(stored) : [];
@@ -147,47 +162,47 @@ const TriageBoard: FC<TriageBoardProps> = ({
       }
     }
   }, [phase, janeDoe]);
-  useEffect(() => {
+  React.useEffect(() => {
     localStorage.setItem("notifications", JSON.stringify(notifications));
   }, [notifications]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     localStorage.setItem("casualties", JSON.stringify(casualties));
   }, [casualties]);
   
-  useEffect(() => {
+  React.useEffect(() => {
     const checkInterval = () => Math.floor(Math.random() * (60 - 45 + 1) + 45) * 1000;
     const interval = setInterval(() => {
-setCasualties((prev): Casualty[] => {
-  const updated: Casualty[] = prev.map((c, i) => {
-    if (
-      !revealedIndexes.includes(i) ||
-      !Array.isArray(c.requiredInterventions) ||
-      c.requiredInterventions.length === 0 ||
-      c.isDemo
-    ) return c;
+      setCasualties((prev): Casualty[] => {
+        const updated: Casualty[] = prev.map((c, i) => {
+          if (
+            !revealedIndexes.includes(i) ||
+            !Array.isArray(c.requiredInterventions) ||
+            c.requiredInterventions.length === 0 ||
+            c.isDemo
+          ) return c;
 
-    const wasStable = c.deteriorated === false;
-    const nowStable = isStabilized(c);
+          const wasStable = c.deteriorated === false;
+          const nowStable = isStabilized(c);
 
-    if (!wasStable && nowStable) {
-      setNotifications(n => [`${c.name} has been stabilized.`, ...n].slice(0, 10));
-    }
+          if (!wasStable && nowStable) {
+            setNotifications(n => [`${c.name} has been stabilized.`, ...n].slice(0, 10));
+          }
 
-    return nowStable
-      ? { ...c, deteriorated: false }
-      : c;
-  });
+          return nowStable
+            ? { ...c, deteriorated: false }
+            : c;
+        });
 
-  localStorage.setItem("casualties", JSON.stringify(updated));
-  return updated;
-});
+        localStorage.setItem("casualties", JSON.stringify(updated));
+        return updated;
+      });
     }, checkInterval());
  
     return () => clearInterval(interval);
-  }, [revealedIndexes]);
+  }, [revealedIndexes, setNotifications]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const endTimer = setTimeout(() => {
       console.log("Scenario ended after 20 minutes");
       localStorage.setItem("casualties", JSON.stringify(casualties));
@@ -195,7 +210,7 @@ setCasualties((prev): Casualty[] => {
     return () => clearTimeout(endTimer);
   }, [casualties]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const interval = setInterval(() => {
       const points = Number(localStorage.getItem("penaltyPoints") || 0);
       if (points >= 120) {
@@ -214,193 +229,73 @@ setCasualties((prev): Casualty[] => {
       }
     }, 2000);
     return () => clearInterval(interval);
-  }, []);
+  }, [setNotifications]);
 
-  const handleTriageChange = (index: number, value: string): void => {
-    setCasualties(prev => {
-      const updated = [...prev];
-      updated[index].triage = value;
-      if (!updated[index].triageTime) {
-        updated[index].triageTime = Math.floor((Date.now() - updated[index].startTime) / 1000);
-      }
-      localStorage.setItem("casualties", JSON.stringify(updated));
-      return updated;
-    });
-  };
 
   const handleApplyItem = (index: number, item: string): void => {
-    const casualtyName = casualties[index].name;
-    setCasualties(prev => {
-      const updated = prev.map(c => ({
-        ...c,
-        interventions: c.interventions.map((i: Intervention) => ({ ...i }))
-      }));
-      const casualty = updated[index];
-      const existing = casualty.interventions.find((i: Intervention) => i.name === item);
-
-      if (existing) {
-        existing.count += 1;
-      } else {
-        casualty.interventions.push({ name: item, count: 1 });
-      }
-
-      if (!casualty.treatmentTime) {
-        const cricNames = ["CRICKIT", "Cric"];
-        if (cricNames.includes(item)) {
-          const current = Number(localStorage.getItem("penaltyPoints") || 0);
-          localStorage.setItem("penaltyPoints", String(current + 40));
-          console.log(`${casualtyName}: +40 penalty for using ${item}`);
-        }
-        casualty.treatmentTime = Math.floor((Date.now() - casualty.startTime) / 1000);
-      }
-
-      if (!casualty.isDemo && isStabilized(casualty)) {
-        casualty.deteriorated = false;
-        setNotifications(n => [`${casualty.name} has been stabilized.`, ...n].slice(0, 10));
-      }
-
-      return updated;
-    });
-
-    if (!casualties[index].isDemo) {
-      removeItem(item);
-    }
-  };
-
-  useEffect(() => {
-    localStorage.setItem("revealedIndexes", JSON.stringify(revealedIndexes));
-  }, [revealedIndexes]);
-
-  const [highlightedCasualtyIndex, setHighlightedCasualtyIndex] = useState<number | null>(null);
-
-  return (
-    <>
-  <section>
-  <h4>Notifications</h4>
-  <ul id="notification-list" className="compact-list">
-    {notifications.map((note, index) => (
-      <li key={index}>{note}</li>
-    ))}
-  </ul>
-  <button
-    onClick={() => {
-      const resuppliesUsed = Number(localStorage.getItem("resuppliesUsed") || "0") + 1;
-      localStorage.setItem("resuppliesUsed", String(resuppliesUsed));
-
-      const penalty = Number(localStorage.getItem("penaltyPoints") || "0") + 30;
-      localStorage.setItem("penaltyPoints", String(penalty));
-
-      const message = `Resupply requested. +30s penalty (${resuppliesUsed} used)`;
-      setNotifications(n => [message, ...n].slice(0, 10));
-
-      const channel = new BroadcastChannel("triage-updates");
-      channel.postMessage({ type: "notifications", payload: [message] });
-
-      if (resuppliesUsed === 3) {
-        let casualties = [];
-        try {
-          casualties = JSON.parse(localStorage.getItem("casualties") || "[]");
-        } catch (error) {
-          console.error("Failed to parse casualties from localStorage:", error);
-        }
-
-        const snuffy = {
-          name: "PVT Snuffy",
-          injury: "Hit by falling debris while carrying aid bag",
-          vitals: {
-            pulse: 110,
-            respiratory: 24,
-            bp: "100/70",
-            spo2: 96,
-            airway: "Clear",
-            steth: "Normal"
-          },
-          triage: "",
-          interventions: [],
-          deteriorated: false,
-          requiredInterventions: ["Wound Packing"],
-          startTime: Date.now(),
-          treatmentTime: null,
-          triageTime: null,
-          isDemo: false
-        };
-
-        const updated = [...casualties, snuffy];
-        localStorage.setItem("casualties", JSON.stringify(updated));
-
-        channel.postMessage({ type: "casualties", payload: updated });
-        channel.postMessage({ type: "notifications", payload: ["⚠️ Snuffy injured during resupply and needs care."] });
-      }
-
-      channel.close();
-    }}
-  >
-    Request Resupply
-  </button>
-</section>
-    <div className="casualty-grid">
-      {casualties
-        .map((casualty, index) => ({ casualty, index }))
-        .filter(({ casualty, index }) => {
-          if (casualty.isDemo && phase === "triage") return false;
-          return revealedIndexes.includes(index) || casualty.isDemo;
-        })
-        .sort((a, b) => {
-          const triageOrder = { "": 0, "Immediate": 1, "Delayed": 2, "Minimal": 3, "Expectant": 4 };
-          if (!a.casualty.triage && !b.casualty.triage) {
-            return a.casualty.startTime - b.casualty.startTime;
-          }
-          if (!a.casualty.triage) return -1;
-          if (!b.casualty.triage) return 1;
-          return triageOrder[a.casualty.triage as keyof typeof triageOrder] - triageOrder[b.casualty.triage as keyof typeof triageOrder];
-        })
-        .map(({ casualty, index }) => {
-          console.log("Rendering casualty:", casualty.name, "Index:", index);
-          return (
-          <div
-            key={index}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              e.preventDefault();
-              const item = e.dataTransfer.getData("text/plain");
-              if (item) {
-                handleApplyItem(index, item);
-                e.dataTransfer.clearData();
-              }
-            }}
-          >
-           <CasualtyCard
-  aidBag={aidBag}
-  removeItem={removeItem}
-  casualty={casualty}
-  isHighlighted={highlightedCasualtyIndex === index}
-  onTriageChange={(value: string) => {
     const updated = [...casualties];
-    updated[index].triage = value;
-    updated[index].triageTime = Math.floor((Date.now() - updated[index].startTime) / 1000);
-    setCasualties(updated);
-    localStorage.setItem("casualties", JSON.stringify(updated));
-    new BroadcastChannel("triage-updates").postMessage({ type: "casualties", payload: updated });
-  }}
-  applyItem={(item: string) => {
-    const updated = [...casualties];
-    const existing = updated[index].interventions.find(i => i.name === item);
+    const casualty = updated[index];
+    const existing = casualty.interventions.find(i => i.name === item);
     if (existing) {
       existing.count += 1;
     } else {
-      updated[index].interventions.push({ name: item, count: 1 });
+      casualty.interventions.push({ name: item, count: 1 });
     }
-    updated[index].treatmentTime = Math.floor((Date.now() - updated[index].startTime) / 1000);
+    // Combined wound-packing logic
+    if (casualty.requiredInterventions.includes("Wound Packing")) {
+      const hasCombat = casualty.interventions.some(i => i.name.includes("Combat Gauze"));
+      const hasCompressed = casualty.interventions.some(i => i.name.includes("Compressed Gauze"));
+      if (hasCombat && hasCompressed && !casualty.interventions.find(i => i.name === "Wound Packing")) {
+        casualty.interventions.push({ name: "Wound Packing", count: 1 });
+        setNotifications(n => ["Wound Packing applied.", ...n].slice(0, 10));
+      }
+    }
+    if (!casualty.treatmentTime) {
+      casualty.treatmentTime = Math.floor((Date.now() - casualty.startTime) / 1000);
+    }
     setCasualties(updated);
-    localStorage.setItem("casualties", JSON.stringify(updated));
+    removeItem(item);
     new BroadcastChannel("triage-updates").postMessage({ type: "casualties", payload: updated });
-  }}
-/>
-          </div>
-        )})}
-      </div>
+  };
+
+  React.useEffect(() => {
+    localStorage.setItem("revealedIndexes", JSON.stringify(revealedIndexes));
+  }, [revealedIndexes]);
+
+
+  return (
+    <>
+      <NotificationPanel
+        notifications={notifications}
+        onRequestResupply={() => {
+          const now = Date.now();
+          const last = Number(localStorage.getItem("lastResupplyTime") || "0");
+          if (now - last < 120000) {
+            const warn = "No one is available to retrieve supplies right now. Try again later.";
+            setNotifications(n => [warn, ...n].slice(0, 10));
+            return;
+          }
+          localStorage.setItem("lastResupplyTime", String(now));
+          const resuppliesUsed = Number(localStorage.getItem("resuppliesUsed") || "0") + 1;
+          localStorage.setItem("resuppliesUsed", String(resuppliesUsed));
+          const penalty = Number(localStorage.getItem("penaltyPoints") || "0") + 30;
+          localStorage.setItem("penaltyPoints", String(penalty));
+          const message = `Resupply requested. +30 point penalty (${resuppliesUsed} used)`;
+          setNotifications(n => [message, ...n].slice(0, 10));
+        }}
+        resupplyDisabled={resupplyDisabled}
+        disableLabel={disableLabel}
+      />
+      <CasualtyGrid
+        aidBag={aidBag}
+        casualties={casualties}
+        revealedIndexes={revealedIndexes}
+        phase={phase}
+        removeItem={removeItem}
+        handleApplyItem={handleApplyItem}
+        setNotifications={setNotifications}
+      />
     </>
   );
 }
 export default TriageBoard;
-

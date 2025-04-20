@@ -35,7 +35,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     localStorage.setItem('notifications', JSON.stringify(notifications));
-    channelRef.current?.postMessage({ type: 'notifications', payload: notifications });
+    // channelRef.current?.postMessage({ type: 'notifications', payload: notifications });
   }, [notifications]);
 
   useEffect(() => {
@@ -44,6 +44,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }, [phase]);
 
   useEffect(() => {
+    // Ensure initial localStorage value is respected on load
+    const storedPhase = localStorage.getItem("phase");
+    if (storedPhase && storedPhase !== phase) {
+      setPhase(storedPhase);
+    }
+
     const channel = new BroadcastChannel('triage-updates');
     channelRef.current = channel;
     channel.onmessage = (event) => {
@@ -54,7 +60,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       if (type === 'notifications') {
         setNotifications(payload);
       }
-      if (type === 'phase') {
+      if (type === 'phase' && typeof payload === 'string') {
         setPhase(payload);
       }
     };
@@ -62,7 +68,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       channel.close();
       channelRef.current = null;
     };
-  }, []);
+  }, [phase]);
 
   return (
     <AppContext.Provider value={{ aidBag, setAidBag, notifications, setNotifications, phase, setPhase }}>

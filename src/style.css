@@ -116,13 +116,16 @@ body {
 
 
 /* 
- .page {
-   display: none;
- }
- 
- .page.visible {
-   display: block;
- }
+.page {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.page.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
 */
 
 .grid {

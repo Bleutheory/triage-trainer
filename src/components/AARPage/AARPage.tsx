@@ -1,5 +1,4 @@
 // @ts-ignore: allow importing CSS modules
-import styles from './AARPage.module.css';
 import React, { useEffect, useState, FC } from 'react';
 import { Casualty } from '../../types';
 

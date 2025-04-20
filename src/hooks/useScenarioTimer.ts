@@ -12,11 +12,18 @@ export default function useScenarioTimer(endTime: number = 0, phase: Phase): str
   const [timerLabel, setTimerLabel] = useState('--:--');
 
   const update = useCallback(() => {
-    if (phase !== 'triage' || !endTime || isNaN(endTime)) {
+    if (phase !== 'triage') {
       setTimerLabel('--:--');
       return;
     }
-    const remaining = Math.max(0, endTime - Date.now());
+    const effectiveEndTime = (!endTime || isNaN(endTime))
+      ? Number(localStorage.getItem("scenarioEndTime"))
+      : endTime;
+    if (!effectiveEndTime || isNaN(effectiveEndTime)) {
+      setTimerLabel('--:--');
+      return;
+    }
+    const remaining = Math.max(0, effectiveEndTime - Date.now());
     const minutes = String(Math.floor(remaining / 60000)).padStart(2, '0');
     const seconds = String(Math.floor((remaining % 60000) / 1000)).padStart(2, '0');
     setTimerLabel(`${minutes}:${seconds}`);

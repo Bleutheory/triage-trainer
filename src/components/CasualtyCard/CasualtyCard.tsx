@@ -1,5 +1,4 @@
 // @ts-ignore: allow importing CSS modules
-import styles from './CasualtyCard.module.css';
 import React, { FC, useState } from 'react';
 import { Casualty, Vitals } from '../../types';;
 interface CasualtyCardProps {

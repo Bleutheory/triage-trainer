@@ -20,11 +20,13 @@ const InstructorDashboard: FC = () => {
     return localStorage.getItem("autoReveal") !== "false";
   });
   const addItem = (item: string) => {
-    const updated = { ...aidBag, [item]: (aidBag[item] || 0) + 1 };
-    setAidBag(updated);
-    localStorage.setItem("aidBag", JSON.stringify(updated));
-    const channel = new BroadcastChannel("triage-updates");
-    channel.postMessage({ type: "aidBag", payload: updated });
+    setAidBag(prev => {
+      const updated = { ...prev, [item]: (prev[item] || 0) + 1 };
+      localStorage.setItem("aidBag", JSON.stringify(updated));
+      const channel = new BroadcastChannel("triage-updates");
+      channel.postMessage({ type: "aidBag", payload: updated });
+      return updated;
+    });
   };
 
   useEffect(() => {

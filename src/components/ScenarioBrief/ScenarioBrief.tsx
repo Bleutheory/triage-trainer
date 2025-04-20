@@ -1,5 +1,4 @@
 // @ts-ignore: allow importing CSS modules
-import styles from './ScenarioBrief.module.css';
 import React, { FC } from 'react';
 
 const ScenarioBrief: FC = () => {

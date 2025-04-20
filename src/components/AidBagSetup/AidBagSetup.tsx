@@ -4,7 +4,6 @@
 // @ts-ignore: allow importing CSS modules
 // @ts-ignore: allow importing CSS modules
 // @ts-ignore: allow importing CSS modules
-import styles from './AidBagSetup.module.css';
 import React, { FC } from 'react';
 import { useAppContext } from '../../context/AppContext';
 // Removed unused useState import

@@ -8,7 +8,7 @@ import AidBagSetup from './components/AidBagSetup/AidBagSetup';
 import ScenarioBrief from './components/ScenarioBrief/ScenarioBrief';
 import TriagePhase from './components/TriagePhase/TriagePhase';
 import AARPage from './components/AARPage/AARPage';
-
+import PhaseControls from './components/TriageBoard/PhaseControls';
 
 type BroadcastMessage = 
   | { type: 'phase'; payload: 'packing' | 'brief' | 'triage' | 'aar' }
@@ -36,41 +36,30 @@ const App: FC = () => {
   const channel = useRef(new BroadcastChannel('triage-updates'));
   const [timerLabel, setTimerLabel] = useState<string>('Timer: --:--');
   const [currentPage, setCurrentPage] = useState<'setup'|'scenario-brief'|'triage'|'aar'>('setup');
-  const phaseTimers = useRef<Record<string, number | null>>({ setup: null, brief: null });
-  const { aidBag = {}, setPhase } = useAppContext();
+  const phaseTimers = useRef<Record<string, number | null>>({
+    setup: null,
+    brief: null
+  });
+  const { aidBag = {}, setPhase, phase } = useAppContext();
 
   const navigateTo = useCallback((page: typeof currentPage) => {
     setCurrentPage(page);
   }, []);
 
-  const setPhase = (phase: 'packing' | 'brief' | 'triage' | 'aar') => {
-    channel.current.postMessage({ type: 'phase', payload: phase });
-  };
 
   const startPacking = () => {
     setPhase("packing");
     const endTime = Date.now() + 5 * 60 * 1000; // 5 minutes
     safeSetItem("scenarioEndTime", String(endTime));
 
-    phaseTimers.current.packing = setTimeout(() => {
+    phaseTimers.current.packing = window.setTimeout(() => {
       setPhase("brief");
     }, 5 * 60 * 1000); // Transition to "brief" after 5 minutes
   };
 
-  const startBrief = () => {
-    setPhase("brief");
-    const endTime = Date.now() + 5 * 60 * 1000; // 5 minutes
-    safeSetItem("scenarioEndTime", String(endTime));
-
-    phaseTimers.current.brief = setTimeout(() => {
-      generateCasualties();
-      const triageEndTime = Date.now() + scenarioTimeLimit;
-      safeSetItem("scenarioEndTime", String(endTime));
-      setPhase("triage");
-    }, 5 * 60 * 1000); // Transition to "triage" after 5 minutes
-  };
 
   useEffect(() => {
+    const chan = channel.current;
     const handleMessage = ({ data }: MessageEvent<BroadcastMessage>) => {
       if (data?.type === 'phase') {
         const map: Record<string, typeof currentPage> = {
@@ -83,9 +72,9 @@ const App: FC = () => {
       }
     };
 
-    channel.current.onmessage = handleMessage;
+    chan.onmessage = handleMessage;
     return () => {
-      channel.current.onmessage = null;
+      chan.onmessage = null;
     };
   }, [navigateTo]);
 
@@ -115,13 +104,11 @@ const App: FC = () => {
     <>
       <header className="header-bar">
         <h1 className="app-title">Triage Trainer</h1>
-        <div className="instructor-controls">
-          <button onClick={() => {
-            startPacking();
-          }}>
-            Start Packing
-          </button>
-          <button onClick={() => {
+        <PhaseControls
+          phase={phase}
+          timerLabel={timerLabel}
+          onStartPacking={startPacking}
+          onStartBrief={() => {
             const duration = 5 * 60 * 1000;
             safeSetItem("phase", "brief");
             safeSetItem("scenarioEndTime", String(Date.now() + duration));
@@ -137,10 +124,9 @@ const App: FC = () => {
               channel.current.postMessage({ type: 'phase', payload: 'triage' });
               channel.current.postMessage({ type: 'timer', payload: String(end) });
             }, duration);
-          }}>
-            Start Brief
-          </button>
-          <button onClick={() => {
+          }}
+          onStartTriage={() => {
+            if (phase === 'triage') return;
             const count = Number(safeGetItem('casualtyCount')) || 15;
             const list = generateUniqueCasualties(count);
             safeSetItem('casualties', JSON.stringify(list));
@@ -148,21 +134,14 @@ const App: FC = () => {
             safeSetItem('scenarioEndTime', String(Date.now() + limit * 60000));
             channel.current.postMessage({ type: 'phase', payload: 'triage' });
             channel.current.postMessage({ type: 'timer', payload: String(Date.now() + limit * 60000) });
-          }}>
-            Start Triage
-          </button>
-          <button onClick={() => channel.current.postMessage({ type: 'phase', payload: 'aar' })}>
-            End Scenario
-          </button>
-          <button onClick={() => {
+          }}
+          onEndScenario={() => channel.current.postMessage({ type: 'phase', payload: 'aar' })}
+          onRestart={() => {
             localStorage.clear();
             channel.current.postMessage({ type: 'reset' });
             window.location.reload();
-          }}>
-            Restart Program
-          </button>
-          <div className="linked-timer">{timerLabel}</div>
-        </div>
+          }}
+        />
       </header>
       <div className="app-container">
         <aside className="sidebar">
