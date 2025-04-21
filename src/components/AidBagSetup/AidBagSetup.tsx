@@ -1,9 +1,3 @@
-// @ts-ignore: allow importing CSS modules
-// @ts-ignore: allow importing CSS modules
-// @ts-ignore: allow importing CSS modules
-// @ts-ignore: allow importing CSS modules
-// @ts-ignore: allow importing CSS modules
-// @ts-ignore: allow importing CSS modules
 import React, { FC } from 'react';
 import { useAppContext } from '../../context/AppContext';
 // Removed unused useState import
@@ -20,7 +14,11 @@ const { aidBag, setAidBag } = useAppContext();
   const removeItem = (item: string) => {
     setAidBag((prev: Record<string, number>) => {
       const updated = { ...prev };
-      delete updated[item];
+      if (updated[item] > 1) {
+        updated[item] = updated[item] - 1;
+      } else {
+        delete updated[item];
+      }
       return updated;
     });
   };

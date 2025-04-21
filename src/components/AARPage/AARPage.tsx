@@ -1,4 +1,3 @@
-// @ts-ignore: allow importing CSS modules
 import React, { useEffect, useState, FC } from 'react';
 import { Casualty } from '../../types';
 

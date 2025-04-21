@@ -7,12 +7,25 @@ interface AppContextProps {
   setNotifications: Dispatch<SetStateAction<string[]>>;
   phase: string;
   setPhase: Dispatch<SetStateAction<string>>;
+  broadcast: (type: string, payload: any) => void;
+  packDuration: number;
+  setPackDuration: Dispatch<SetStateAction<number>>;
+  briefDuration: number;
+  setBriefDuration: Dispatch<SetStateAction<number>>;
+  triageLimit: number;
+  setTriageLimit: Dispatch<SetStateAction<number>>;
 }
 
 const AppContext = createContext<AppContextProps | undefined>(undefined);
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const channelRef = useRef<BroadcastChannel | null>(null);
+  // Helper to broadcast messages on the shared channel
+  const broadcast = (type: string, payload: any) => {
+    if (channelRef.current) {
+      channelRef.current.postMessage({ type, payload });
+    }
+  };
 
   const [aidBag, setAidBag] = useState<Record<string, number>>(() => {
     const stored = localStorage.getItem('aidBag');
@@ -27,6 +40,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [phase, setPhase] = useState<string>(() => {
     return localStorage.getItem('phase') || 'idle';
   });
+  // Configurable phase durations (minutes)
+  const [packDuration, setPackDuration] = useState<number>(() =>
+    Number(localStorage.getItem('packDuration')) || 5
+  );
+  const [briefDuration, setBriefDuration] = useState<number>(() =>
+    Number(localStorage.getItem('briefDuration')) || 5
+  );
+  const [triageLimit, setTriageLimit] = useState<number>(() =>
+    Number(localStorage.getItem('triageLimit')) || 20
+  );
 
   useEffect(() => {
     localStorage.setItem('aidBag', JSON.stringify(aidBag));
@@ -42,6 +65,24 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('phase', phase);
     channelRef.current?.postMessage({ type: 'phase', payload: phase });
   }, [phase]);
+  
+  // Persist and broadcast pack duration
+  useEffect(() => {
+    localStorage.setItem('packDuration', String(packDuration));
+    channelRef.current?.postMessage({ type: 'settings:packDuration', payload: packDuration });
+  }, [packDuration]);
+  
+  // Persist and broadcast brief duration
+  useEffect(() => {
+    localStorage.setItem('briefDuration', String(briefDuration));
+    channelRef.current?.postMessage({ type: 'settings:briefDuration', payload: briefDuration });
+  }, [briefDuration]);
+  
+  // Persist and broadcast triage time limit
+  useEffect(() => {
+    localStorage.setItem('triageLimit', String(triageLimit));
+    channelRef.current?.postMessage({ type: 'settings:triageLimit', payload: triageLimit });
+  }, [triageLimit]);
 
   useEffect(() => {
     // Ensure initial localStorage value is respected on load
@@ -71,7 +112,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }, [phase]);
 
   return (
-    <AppContext.Provider value={{ aidBag, setAidBag, notifications, setNotifications, phase, setPhase }}>
+    <AppContext.Provider value={{
+      aidBag, setAidBag,
+      notifications, setNotifications,
+      phase, setPhase,
+      broadcast,
+      packDuration, setPackDuration,
+      briefDuration, setBriefDuration,
+      triageLimit, setTriageLimit
+    }}>
       {children}
     </AppContext.Provider>
   );

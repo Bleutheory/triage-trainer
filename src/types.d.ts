@@ -42,3 +42,7 @@ export interface Casualty {
   triageTime: number | null;
   isDemo: boolean;
 }
+
+// Allow CSS imports without type errors
+declare module '*.css';
+declare module '*.module.css';

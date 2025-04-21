@@ -1,16 +1,19 @@
 // @ts-ignore: allow importing CSS modules
 import React, { FC, useState } from 'react';
+import { useAppContext } from '../../context/AppContext';
 import { Casualty, Vitals } from '../../types';;
 interface CasualtyCardProps {
+  index: number;
   aidBag: Record<string, number>;
   removeItem: (item: string) => void;
   casualty: Casualty;
   onTriageChange: (value: string) => void;
   isHighlighted: boolean;
-applyItem: (item: string) => void;
+  applyItem: (item: string) => void;
 }
 
-const CasualtyCard: FC<CasualtyCardProps> = ({ aidBag, removeItem, casualty, onTriageChange, isHighlighted, applyItem }) => {
+const CasualtyCard: FC<CasualtyCardProps> = ({ index, aidBag, removeItem, casualty, onTriageChange, isHighlighted, applyItem }) => {
+  const { broadcast } = useAppContext();
   const [showVitals, setShowVitals] = useState(false);
   const [visibleVitals, setVisibleVitals] = useState<Record<keyof Vitals, boolean>>(() => ({
     pulse: false,
@@ -25,23 +28,28 @@ const CasualtyCard: FC<CasualtyCardProps> = ({ aidBag, removeItem, casualty, onT
     const stabilized = (casualty.requiredInterventions || []).every(req =>
       casualty.interventions.some(i => i.name === req && i.count > 0)
     );
-    if (stabilized && casualty.treatmentTime == null) {
-      const updated = JSON.parse(localStorage.getItem("casualties") || "[]").map((c: Casualty) =>
-        c.name === casualty.name
+  if (stabilized && casualty.treatmentTime == null) {
+      const list = JSON.parse(localStorage.getItem("casualties") || "[]") as Casualty[];
+      const updated = list.map((c, i) =>
+        i === index
           ? { ...c, treatmentTime: Math.floor((Date.now() - c.startTime) / 1000) }
           : c
       );
       localStorage.setItem("casualties", JSON.stringify(updated));
-      const channel = new BroadcastChannel("triage-updates");
-      channel.postMessage({ type: "casualties", payload: updated });
+      broadcast("casualties", updated);
     }
-  }, [casualty]);
+  }, [casualty, index, broadcast]);
 
-  const triageClass = casualty.isDemo
-    ? 'casualty-card demo-card'
-    : casualty.triage
-    ? `casualty-card triage-${casualty.triage.toLowerCase()}`
-    : 'casualty-card';
+  const baseClass = 'casualty-card';
+  const triageClass = casualty.triage
+    ? `triage-${casualty.triage.toLowerCase()}`
+    : '';
+  const fullClassName = [
+    baseClass,
+    casualty.isDemo ? 'demo-card' : '',
+    triageClass,
+    casualty.deteriorated ? 'deteriorated' : '',
+  ].filter(Boolean).join(' ');
   const labelMap: Record<keyof Vitals, string> = {
     pulse: "Request Pulse",
     respiratory: "Request Respiratory Rate",
@@ -52,7 +60,7 @@ const CasualtyCard: FC<CasualtyCardProps> = ({ aidBag, removeItem, casualty, onT
   };
 
   return (
-    <div className={triageClass}>
+    <div className={fullClassName}>
       <h3>{casualty.name}</h3>
       <p><strong>Injury:</strong> {casualty.injury}</p>
       <div>
@@ -63,15 +71,19 @@ const CasualtyCard: FC<CasualtyCardProps> = ({ aidBag, removeItem, casualty, onT
           value={casualty.triage || ""}
           onChange={(e) => {
             const newTriage = e.target.value;
-            const updated = JSON.parse(localStorage.getItem("casualties") || "[]").map((c: Casualty) =>
-              c.name === casualty.name
-                ? { ...c, triage: newTriage, triageTime: Math.floor((Date.now() - c.startTime) / 1000) }
+            const list = JSON.parse(localStorage.getItem("casualties") || "[]") as Casualty[];
+            const updated = list.map((c, i) =>
+              i === index
+                ? {
+                    ...c,
+                    triage: newTriage,
+                    triageTime: Math.floor((Date.now() - c.startTime) / 1000),
+                  }
                 : c
             );
             localStorage.setItem("casualties", JSON.stringify(updated));
 
-            const channel = new BroadcastChannel("triage-updates");
-            channel.postMessage({ type: "casualties", payload: updated });
+            broadcast("casualties", updated);
 
             onTriageChange(newTriage);
           }}

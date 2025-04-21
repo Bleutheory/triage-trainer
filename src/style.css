@@ -38,12 +38,18 @@ body {
   border-color: #69a7ff;
 }
 
+/* Make the app container stack header + content vertically */
 .app-container {
   display: flex;
-  flex: 1;
-  height: calc(100vh - 60px);
-  overflow: hidden;
+  flex-direction: column;
+  min-height: 100vh;
 }
+
+.content-wrapper {
+  display: flex;
+  flex: 1;
+}
+
 
 .sidebar {
   width: 240px;
@@ -107,7 +113,8 @@ body {
 }
 
 .main-content {
-  flex: 1;
+  display: flex;
+  flex: 1;    
   padding: 20px;
   background-color: #2D3748;
   overflow-y: auto;
@@ -142,17 +149,10 @@ body {
 }
 
 .casualty-grid {
-  width: 100%;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(275px, 1fr));
+  width: 100%;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 15px;
-}
-
-.casualty-grid {
-  width: 100%;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-  gap: 20px;
 }
 
 .casualty-card {
@@ -230,8 +230,7 @@ th {
   white-space: nowrap;
 }
 .page {
-  max-width: 1400px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 .sidebar-notifications {
@@ -259,19 +258,28 @@ th {
 .sidebar-resupply {
   margin-top: 10px;
 }
-.casualty-card {
-  border: 1px solid #4A5568;
-  padding: 12px;
-  border-radius: 8px;
-  background-color: #2D3748;
-  color: #E2E8F0;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+ .casualty-card {
+   border: 1px solid #4A5568;
+   padding: 12px;
+   border-radius: 8px;
+   background-color: #2D3748;
+   color: #E2E8F0;
+   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+   transition: transform 0.2s ease, box-shadow 0.2s ease;
+ }
+
+ .casualty-card:hover {
+   transform: translateY(-4px);
+   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+ }
+
+@keyframes flashYellow {
+  0%, 100% { border-color: #A0C4FF; }
+  50% { border-color: yellow; }
 }
 
-.casualty-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+.casualty-card.deteriorated {
+  animation: flashYellow 1s infinite;
 }
 
 /* === TRIAGE COLOR CLASSES === */
@@ -291,8 +299,8 @@ th {
 }
 
 .casualty-card.triage-expectant {
-  border-color: #718096;  /* gray */
-  background-color: #2D3748;
+  border-color: #718096;  /* black */
+  background-color: #000000;
 }
 
 .casualty-card h3 {

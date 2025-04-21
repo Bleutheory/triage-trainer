@@ -50,6 +50,7 @@ const CasualtyGrid: React.FC<CasualtyGridProps> = ({
           }}
         >
           <CasualtyCard
+            index={index}
             aidBag={aidBag}
             removeItem={removeItem}
             casualty={casualty}

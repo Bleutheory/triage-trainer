@@ -1,10 +1,3 @@
-// @ts-ignore: allow importing CSS modules
-// @ts-ignore: allow importing CSS modules
-// @ts-ignore: allow importing CSS modules
-// @ts-ignore: allow importing CSS modules
-// @ts-ignore: allow importing CSS modules
-// @ts-ignore: allow importing CSS modules
-import styles from './AidBagSetup.test.module.css';
 import '@testing-library/jest-dom';
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';

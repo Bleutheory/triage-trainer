@@ -1,0 +1,76 @@
+import { useState, useEffect } from 'react';
+import { useAppContext } from '../context/AppContext';
+
+type Phase = 'setup' | 'scenario-brief' | 'triage' | 'aar';
+
+interface Durations {
+  packDuration: number;
+  briefDuration: number;
+  triageLimit: number;
+}
+
+/**
+ * Returns a timer label for the given phase:
+ * - Countdown for 'setup' and 'scenario-brief'
+ * - Count-up (capped) for 'triage'
+ * - Static '--:--' for 'aar' or unknown
+ */
+export default function usePhaseTimer(
+  phase: Phase,
+  durations: Durations
+): string {
+  const [label, setLabel] = useState('--:--');
+
+  useEffect(() => {
+    let durationMs = 0;
+    let storageKey = '';
+    let isCountUp = false;
+
+    switch (phase) {
+      case 'setup':
+        storageKey = 'packingEndTime';
+        durationMs = durations.packDuration * 60 * 1000;
+        break;
+      case 'scenario-brief':
+        storageKey = 'briefEndTime';
+        durationMs = durations.briefDuration * 60 * 1000;
+        break;
+      case 'triage':
+        storageKey = 'triageEndTime';
+        durationMs = durations.triageLimit * 60 * 1000;
+        isCountUp = true;
+        break;
+      default:
+        setLabel('--:--');
+        return;
+    }
+
+    const endTime = Number(localStorage.getItem(storageKey));
+    if (!endTime || isNaN(endTime)) {
+      setLabel('--:--');
+      return;
+    }
+
+    const updateLabel = () => {
+      const now = Date.now();
+      if (!isCountUp) {
+        const remaining = Math.max(0, endTime - now);
+        const minutes = String(Math.floor(remaining / 60000)).padStart(2, '0');
+        const seconds = String(Math.floor((remaining % 60000) / 1000)).padStart(2, '0');
+        setLabel(`${minutes}:${seconds}`);
+      } else {
+        const start = endTime - durationMs;
+        const elapsed = Math.min(durationMs, now - start);
+        const minutes = String(Math.floor(elapsed / 60000)).padStart(2, '0');
+        const seconds = String(Math.floor((elapsed % 60000) / 1000)).padStart(2, '0');
+        setLabel(`${minutes}:${seconds}`);
+      }
+    };
+
+    updateLabel();
+    const interval = window.setInterval(updateLabel, 1000);
+    return () => clearInterval(interval);
+  }, [phase, durations.packDuration, durations.briefDuration, durations.triageLimit]);
+
+  return label;
+}

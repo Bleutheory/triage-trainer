@@ -1,5 +1,4 @@
-// @ts-ignore: allow importing CSS modules
-import styles from './InstructorDashboard.module.css';
+import './InstructorDashboard.css';
 
 import React, { FC, useEffect, useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
@@ -8,7 +7,7 @@ import { Casualty, Intervention } from '../../types';
 import { generateCasualty } from '../casualtyGenerator/casualtyGenerator';
 
 const InstructorDashboard: FC = () => {
-  const { aidBag, setAidBag, phase } = useAppContext();
+  const { aidBag, setAidBag, phase, broadcast } = useAppContext();
   const [casualties, setCasualties] = useState<Casualty[]>([]);
   const [scenarioTimeLimit, setScenarioTimeLimit] = useState(() => {
     return Number(localStorage.getItem("scenarioTimeLimit")) || 20;
@@ -23,24 +22,18 @@ const InstructorDashboard: FC = () => {
     setAidBag(prev => {
       const updated = { ...prev, [item]: (prev[item] || 0) + 1 };
       localStorage.setItem("aidBag", JSON.stringify(updated));
-      const channel = new BroadcastChannel("triage-updates");
-      channel.postMessage({ type: "aidBag", payload: updated });
+      broadcast("aidBag", updated);
       return updated;
     });
   };
 
-  useEffect(() => {
-    const updateData = () => {
-      const stored = localStorage.getItem('casualties');
-      if (stored) setCasualties(JSON.parse(stored));
-    };
-
-    updateData();
-    const interval = setInterval(updateData, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
+    // Initial load of casualties from localStorage
+    const storedCasualties = localStorage.getItem('casualties');
+    if (storedCasualties) {
+      setCasualties(JSON.parse(storedCasualties));
+    }
     const channel = new BroadcastChannel('triage-updates');
     channel.onmessage = (msg) => {
       if (msg.data?.type === "casualties" && Array.isArray(msg.data.payload)) {
@@ -62,8 +55,7 @@ const InstructorDashboard: FC = () => {
             const updatedList = [...casualtiesList, newCasualty];
             localStorage.setItem('casualties', JSON.stringify(updatedList));
             setCasualties(updatedList);
-            const channel = new BroadcastChannel("triage-updates");
-            channel.postMessage({ type: "casualties", payload: updatedList });
+            broadcast("casualties", updatedList);
           }}
           style={{ marginRight: "10px", padding: "8px" }}
         >
@@ -90,8 +82,7 @@ const InstructorDashboard: FC = () => {
               const value = Number(e.target.value);
               setScenarioTimeLimit(value);
               localStorage.setItem("scenarioTimeLimit", String(value));
-              const channel = new BroadcastChannel("triage-updates");
-              channel.postMessage({ type: "settings", payload: { scenarioTimeLimit: value } });
+              broadcast("settings", { scenarioTimeLimit: value });
             }}
             min={1}
             max={60}
@@ -108,8 +99,7 @@ const InstructorDashboard: FC = () => {
               const value = Number(e.target.value);
               setCasualtyCount(value);
               localStorage.setItem("casualtyCount", String(value));
-              const channel = new BroadcastChannel("triage-updates");
-              channel.postMessage({ type: "settings", payload: { casualtyCount: value } });
+              broadcast("settings", { casualtyCount: value });
             }}
             min={1}
             max={50}
