@@ -146,6 +146,9 @@ const TriageBoard: FC<TriageBoardProps> = ({
         case 'reset':
           window.location.reload();
           break;
+        case 'revealedIndexes':
+          setRevealedIndexes(payload);
+          break;
       }
     };
     return () => channel.close();
@@ -162,6 +165,14 @@ const TriageBoard: FC<TriageBoardProps> = ({
       });
     }
   }, [phase, broadcast]);
+
+  // Re-sync revealedIndexes on phase change
+  useEffect(() => {
+    const storedReveals = localStorage.getItem('revealedIndexes');
+    if (storedReveals) {
+      setRevealedIndexes(JSON.parse(storedReveals));
+    }
+  }, [phase]);
 
   // 6) Add casualty handler
   const handleAdd = () => {
