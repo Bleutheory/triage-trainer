@@ -95,9 +95,10 @@ const TriageBoard: FC<TriageBoardProps> = ({
   }, [phase, broadcast]);
 
   // 3) Auto‑reveal hook
+  const initialCasualtyCount = Number(localStorage.getItem("casualtyCount")) || 15;
   useCasualtyReveal(
     phase,
-    casualties.length,
+    initialCasualtyCount, // 
     localStorage.getItem('autoReveal') !== 'false',
     (idx: number) => {
       setRevealedIndexes(prev => {

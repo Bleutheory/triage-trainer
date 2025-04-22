@@ -79,6 +79,12 @@ const App: FC = () => {
     const list = generateUniqueCasualties(count);
     safeSetItem('casualties', JSON.stringify(list));
   
+    if (typeof window !== 'undefined') {
+      const channel = new BroadcastChannel('triage-updates');
+      channel.postMessage({ type: 'casualties', payload: list });
+      channel.close();
+    }
+  
     const now = Date.now();
     const end = now + triageLimit * 60_000;
     safeSetItem('triageEndTime', String(end));

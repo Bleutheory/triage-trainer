@@ -1,7 +1,9 @@
 // @ts-ignore: allow importing CSS modules
 import React, { FC, useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
-import { Casualty, Vitals } from '../../types';;
+import { Casualty, Vitals } from '../../types';
+import { generateCasualty } from '../casualtyGenerator/casualtyGenerator';
+
 interface CasualtyCardProps {
   index: number;
   aidBag: Record<string, number>;
@@ -128,6 +130,31 @@ const CasualtyCard: FC<CasualtyCardProps> = ({ index, aidBag, removeItem, casual
                     setVisibleVitals(v => ({ ...v, [key]: true }));
                     const current = Number(localStorage.getItem("penaltyPoints") || 0);
                     localStorage.setItem("penaltyPoints", String(current + 20));
+                    if (current + 20 >= 120) {
+                      const list = JSON.parse(localStorage.getItem("casualties") || "[]");
+                      const newCasualty = {
+                        ...generateCasualty(),
+                        startTime: Date.now(),
+                      };
+                      const updated = [...list, newCasualty];
+                    
+                      localStorage.setItem("casualties", JSON.stringify(updated));
+                      localStorage.setItem("penaltyPoints", "0");
+                      broadcast("casualties", updated);
+                      
+                      const revealed = JSON.parse(localStorage.getItem("revealedIndexes") || "[]");
+                      const newIndex = updated.length - 1;
+                      const nextRevealed = Array.from(new Set([...revealed, newIndex]));
+                      localStorage.setItem("revealedIndexes", JSON.stringify(nextRevealed));
+                      broadcast("revealedIndexes", nextRevealed);
+                      
+                      const note = `${newCasualty.name} added due to excessive vitals requests!`;
+                      const oldNotes = JSON.parse(localStorage.getItem("notifications") || "[]");
+                      const nextNotes = [note, ...oldNotes].slice(0, 10);
+                      localStorage.setItem("notifications", JSON.stringify(nextNotes));
+                      broadcast("notifications", nextNotes);
+                    }
+                  
                     console.log(`${casualty.name}: +20 penalty points for requesting ${key}`);
                   }}
                   disabled={visibleVitals[key]}
