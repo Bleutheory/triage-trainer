@@ -46,7 +46,9 @@ const CasualtyGrid: React.FC<CasualtyGridProps> = ({
           onDrop={e => {
             e.preventDefault();
             const item = e.dataTransfer.getData('text/plain');
-            if (item) handleApplyItem(index, item);
+            if (item) {
+              setTimeout(() => handleApplyItem(index, item), 0);
+            }
           }}
         >
           <CasualtyCard

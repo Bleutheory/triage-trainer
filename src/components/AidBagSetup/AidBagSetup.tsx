@@ -116,8 +116,11 @@ const { aidBag, setAidBag } = useAppContext();
                       }}
                       onMouseOver={(e) => e.currentTarget.style.backgroundColor = "#2C7A7B"}
                       onMouseOut={(e) => e.currentTarget.style.backgroundColor = "#4A5568"}
-                      draggable={isSetupPhase}
-                      onDragStart={(e) => e.dataTransfer.setData("text/plain", item)}
+                      draggable={true}
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData("text/plain", item);
+                        console.log('Dragging:', item);  // Confirm drag initiation
+                      }}
                       onClick={() => isSetupPhase && addItem(item)}
                     >
                       {item}

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useAppContext } from '../context/AppContext';
 
 type Phase = 'setup' | 'scenario-brief' | 'triage' | 'aar';
 

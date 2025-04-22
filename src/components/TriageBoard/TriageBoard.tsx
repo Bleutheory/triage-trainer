@@ -153,7 +153,6 @@ const TriageBoard: FC<TriageBoardProps> = ({
       const updated = prev.map((c, i) => {
         if (i !== index) return c;
         if (!c.isDemo) removeItem(item);
-        // Build a new interventions array of Intervention objects
         const interventions: Intervention[] = c.interventions.map(inter => ({ ...inter }));
         const existing = interventions.find(inter => inter.name === item);
         if (existing) {

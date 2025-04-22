@@ -142,11 +142,19 @@ const App: FC = () => {
           <section className="aidbag-snapshot">
             <h3>🎒 Aid Bag Contents</h3>
             <ul>
-              {Object.entries(aidBag).map(([item, count]) => (
-                <li key={item}>
-                  {item} x{count}
-                </li>
-              ))}
+            {Object.entries(aidBag).map(([item, count]) => (
+  <li
+    key={item}
+    draggable
+    onDragStart={(e) => {
+      e.dataTransfer.setData("text/plain", item);
+      console.log("Dragging from sidebar:", item);
+    }}
+    style={{ cursor: "grab" }}
+  >
+    {item} x{count}
+  </li>
+))}
             </ul>
           </section>
         </aside>
