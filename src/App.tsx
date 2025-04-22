@@ -78,10 +78,14 @@ const App: FC = () => {
     const count = Number(safeGetItem('casualtyCount')) || 15;
     const list = generateUniqueCasualties(count);
     safeSetItem('casualties', JSON.stringify(list));
-
-    const end = Date.now() + triageLimit * 60_000;
+  
+    const now = Date.now();
+    const end = now + triageLimit * 60_000;
     safeSetItem('triageEndTime', String(end));
-
+  
+    localStorage.removeItem('packingEndTime');
+    localStorage.removeItem('briefEndTime');
+  
     setPhase('triage');
   };
 
@@ -91,6 +95,25 @@ const App: FC = () => {
 
   const onRestart = () => {
     localStorage.clear();
+  
+    const jane = {
+      name: 'SPC Jane Doe (Demo)',
+      injury: 'Traumatic left leg amputation with severe arterial bleeding',
+      triage: '',
+      interventions: [],
+      deteriorated: false,
+      requiredInterventions: [],
+      vitals: { pulse: 0, respiratory: 0, bp: '0/0', spo2: 0, airway: '', steth: '' },
+      dynamicVitals: { pulse: 0, respiratory: 0, bp: '0/0', spo2: 0, airway: '', steth: '' },
+      startTime: Date.now(),
+      treatmentTime: null,
+      triageTime: null,
+      isDemo: true,
+    };
+  
+    localStorage.setItem('casualties', JSON.stringify([jane]));
+    localStorage.setItem('revealedIndexes', JSON.stringify([0]));
+  
     window.location.reload();
   };
 

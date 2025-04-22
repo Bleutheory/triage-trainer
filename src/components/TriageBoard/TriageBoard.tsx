@@ -7,23 +7,26 @@ import { generateCasualty } from '../casualtyGenerator/casualtyGenerator';
 import useCasualtyReveal from '../../hooks/useCasualtyReveal';
 import useScenarioTimer from '../../hooks/useScenarioTimer';
 import useCasualtyDeterioration from '../../hooks/useCasualtyDeterioration';
+import {
+  useResupply
+} from './resupplyManager';
 
-  // Demo casualty always present until triage starts
-  const demoCasualty: Casualty = {
-    name: 'SPC Jane Doe (Demo)',
-    injury: 'Traumatic left leg amputation with severe arterial bleeding',
-    triage: '',
-    interventions: [],
-    deteriorated: false,
-    requiredInterventions: [],
-    vitals: { pulse: 0, respiratory: 0, bp: '0/0', spo2: 0, airway: '', steth: '' },
-    dynamicVitals: { pulse: 0, respiratory: 0, bp: '0/0', spo2: 0, airway: '', steth: '' },
-    startTime: Date.now(),
-    treatmentTime: null,
-    triageTime: null,
-    isDemo: true,
-  };
-  
+// Demo casualty always present until triage starts
+const demoCasualty: Casualty = {
+  name: 'SPC Jane Doe (Demo)',
+  injury: 'Traumatic left leg amputation with severe arterial bleeding',
+  triage: '',
+  interventions: [],
+  deteriorated: false,
+  requiredInterventions: [],
+  vitals: { pulse: 0, respiratory: 0, bp: '0/0', spo2: 0, airway: '', steth: '' },
+  dynamicVitals: { pulse: 0, respiratory: 0, bp: '0/0', spo2: 0, airway: '', steth: '' },
+  startTime: Date.now(),
+  treatmentTime: null,
+  triageTime: null,
+  isDemo: true,
+};
+
 interface TriageBoardProps {
   aidBag: Record<string, number>;
   removeItem: (item: string) => void;
@@ -47,7 +50,9 @@ const TriageBoard: FC<TriageBoardProps> = ({
   setNotifications,
   phase,
 }) => {
-  const { broadcast } = useAppContext();
+  const { broadcast, setAidBag } = useAppContext();
+
+  const { onRequestResupply, resupplyDisabled } = useResupply();
 
   // 1) Resupply timer
   const timerLabel = useScenarioTimer(
@@ -59,8 +64,9 @@ const TriageBoard: FC<TriageBoardProps> = ({
     const [m, s] = timerLabel.split(':').map(Number);
     setSecondsLeft(m * 60 + s);
   }, [timerLabel]);
-  const resupplyDisabled = secondsLeft > 0;
-  const disableLabel = resupplyDisabled ? `${secondsLeft}s` : '';
+  // Resupply is disabled if either time left on cooldown or resupplyDisabled flag is set
+  const resupplyButtonDisabled = secondsLeft > 0 || resupplyDisabled;
+  const disableLabel = resupplyButtonDisabled && secondsLeft > 0 ? `${secondsLeft}s` : '';
 
   // 2) Load casualties & revealed indexes
   const [casualties, setCasualties] = useState<Casualty[]>(() => {
@@ -72,6 +78,21 @@ const TriageBoard: FC<TriageBoardProps> = ({
     const stored = localStorage.getItem('revealedIndexes');
     return stored ? JSON.parse(stored) : [0];
   });
+  useEffect(() => {
+    const stored = localStorage.getItem('casualties');
+    const loaded: Casualty[] = stored ? JSON.parse(stored) : [];
+    const includesDemo = loaded.some(c => c.isDemo);
+  
+    // If no demo, add Jane back in setup/brief mode
+    if (!includesDemo && phase !== 'triage') {
+      const updated = [demoCasualty, ...loaded];
+      setCasualties(updated);
+      localStorage.setItem('casualties', JSON.stringify(updated));
+      broadcast('casualties', updated);
+    } else {
+      setCasualties(loaded);
+    }
+  }, [phase]);
 
   // 3) Auto‑reveal hook
   useCasualtyReveal(
@@ -128,6 +149,7 @@ const TriageBoard: FC<TriageBoardProps> = ({
     };
     return () => channel.close();
   }, [broadcast, setNotifications]);
+
   // Strip demo casualty once actual triage begins
   useEffect(() => {
     if (phase === 'triage') {
@@ -147,6 +169,12 @@ const TriageBoard: FC<TriageBoardProps> = ({
     localStorage.setItem('casualties', JSON.stringify(list));
     broadcast('casualties', list);
   };
+
+  // Wrap onRequestResupply to pass necessary parameters
+  const handleRequestResupply = () => {
+    onRequestResupply(aidBag, setAidBag, setNotifications, setCasualties);
+  };
+  
   // Apply item to a casualty; demo casualties do not consume supplies
   const handleApplyItem = (index: number, item: string) => {
     setCasualties(prev => {
@@ -175,8 +203,8 @@ const TriageBoard: FC<TriageBoardProps> = ({
       )}
       <NotificationPanel
         notifications={notifications}
-        onRequestResupply={() => broadcast('reset', null)}
-        resupplyDisabled={resupplyDisabled}
+        onRequestResupply={handleRequestResupply}
+        resupplyDisabled={resupplyButtonDisabled}
         disableLabel={disableLabel}
       />
       <CasualtyGrid
