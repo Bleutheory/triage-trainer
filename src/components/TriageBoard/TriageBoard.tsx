@@ -92,7 +92,7 @@ const TriageBoard: FC<TriageBoardProps> = ({
     } else {
       setCasualties(loaded);
     }
-  }, [phase]);
+  }, [phase, broadcast]);
 
   // 3) Auto‑reveal hook
   useCasualtyReveal(
