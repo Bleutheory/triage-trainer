@@ -91,24 +91,29 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       setPhase(storedPhase);
     }
 
-    const channel = new BroadcastChannel('triage-updates');
-    channelRef.current = channel;
-    channel.onmessage = (event) => {
-      const { type, payload } = event.data || {};
-      if (type === 'aidBag') {
-        setAidBag(payload);
-      }
-      if (type === 'notifications') {
-        setNotifications(payload);
-      }
-      if (type === 'phase' && typeof payload === 'string') {
-        setPhase(payload);
-      }
-    };
-    return () => {
-      channel.close();
-      channelRef.current = null;
-    };
+    // Only create BroadcastChannel in non-test environments
+    if (process.env.NODE_ENV !== 'test') {
+      const channel = new BroadcastChannel('triage-updates');
+      channelRef.current = channel;
+      channel.onmessage = (event) => {
+        const { type, payload } = event.data || {};
+        if (type === 'aidBag') {
+          setAidBag(payload);
+        }
+        if (type === 'notifications') {
+          setNotifications(payload);
+        }
+        if (type === 'phase' && typeof payload === 'string') {
+          setPhase(payload);
+        }
+      };
+      return () => {
+        channel.close();
+        channelRef.current = null;
+      };
+    }
+    // In test env, do nothing
+    return () => {};
   }, [phase]);
 
   return (

@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { AppProvider } from '../../context/AppContext';
+import { AppProvider } from '../../context/AppContext.tsx';
 import AidBagSetup from '../AidBagSetup/AidBagSetup';
 
 describe('AidBagSetup', () => {
