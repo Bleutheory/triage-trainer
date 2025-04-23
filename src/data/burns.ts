@@ -3,6 +3,7 @@ import { InjuryProfile } from '../types';
 const burns: Record<string, InjuryProfile> = {
   "burns_face": {
     description: "Burns to the face",
+    requiredInterventions: [],
     getRequiredInterventions: function (_a) {
       var airway = _a.airway;
       return airway ? ["Cric"] : [];

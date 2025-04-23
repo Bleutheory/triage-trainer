@@ -3,6 +3,8 @@ import React, { FC, useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Casualty, Vitals } from '../../types';
 import { generateCasualty } from '../casualtyGenerator/casualtyGenerator';
+import { normalizeInterventionName } from '../AidBagSetup/interventions';
+import injuryProfiles from '../../data';
 
 interface CasualtyCardProps {
   index: number;
@@ -25,14 +27,39 @@ const CasualtyCard: FC<CasualtyCardProps> = ({ index, aidBag, removeItem, casual
     airway: false,
     steth: false
   }));
-  
+
+  const flags = {
+    airway: casualty.vitals.airway.toLowerCase().includes('stridor'),
+    bleeding: !!(casualty.vitals.bp && typeof casualty.vitals.bp === 'string' && casualty.vitals.bp.startsWith('65')),
+    pneumo: casualty.vitals.steth.toLowerCase().includes('tracheal deviation'),
+    ams: false, // Add logic if needed
+    arterial: false, // Add logic if needed
+  };
+
   React.useEffect(() => {
-    const stabilized = (casualty.requiredInterventions || []).every(req =>
-      casualty.interventions.some(i => i.name === req && i.count > 0)
-    );
-  if (stabilized && casualty.treatmentTime == null) {
-      const list = JSON.parse(localStorage.getItem("casualties") || "[]") as Casualty[];
-      const updated = list.map((c, i) =>
+    const profile = injuryProfiles[casualty.injury];
+    const triage = casualty.triage;
+  
+    let required: string[] = [];
+    if (profile?.getRequiredInterventions) {
+required = profile.getRequiredInterventions(flags, triage);
+    } else {
+      required = profile?.requiredInterventions || [];
+    }
+  
+    const stabilized = required.every(req => {
+      const normalizedReq = normalizeInterventionName(req);
+      return casualty.interventions.some(i => {
+        const applied = normalizeInterventionName(i.name);
+        const normReqList = Array.isArray(normalizedReq) ? normalizedReq : [normalizedReq];
+        const normAppliedList = Array.isArray(applied) ? applied : [applied];
+        return normReqList.some(req => normAppliedList.includes(req));
+      });
+    });
+  
+    if (stabilized && casualty.treatmentTime == null) {
+      const list = JSON.parse(localStorage.getItem("casualties") || "[]");
+      const updated = list.map((c: Casualty, i: number) =>
         i === index
           ? { ...c, treatmentTime: Math.floor((Date.now() - c.startTime) / 1000) }
           : c
@@ -60,7 +87,11 @@ const CasualtyCard: FC<CasualtyCardProps> = ({ index, aidBag, removeItem, casual
     airway: "Request Airway Status",
     steth: "Request Lung Sounds"
   };
-
+  const reveals = JSON.parse(localStorage.getItem("revealedIndexes") || "[]") as number[];
+  const nextReveals = Array.from(new Set([...reveals, index]));
+  localStorage.setItem("revealedIndexes", JSON.stringify(nextReveals));
+  broadcast("revealedIndexes", nextReveals);
+  
   return (
     <div className={fullClassName}>
       <h3>{casualty.name}</h3>

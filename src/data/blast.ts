@@ -73,8 +73,8 @@ const blast: Record<string, InjuryProfile> = {
       };
     },
     requiredInterventions: ["Tourniquet"],
-    getRequiredInterventions: (flags, triage) => {
-      return triage === "Immediate" ? ["Tourniquet"] : [];
+    getRequiredInterventions: (flags) => {
+      return flags?.tourniquet ? [] : ["Tourniquet"];
     },
     deterioration: {
       pulse: 24,

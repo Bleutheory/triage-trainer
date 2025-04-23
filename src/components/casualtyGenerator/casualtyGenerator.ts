@@ -8,9 +8,9 @@ function getRandomInRange(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-const ranks = ["PVT", "PV2", "PFC", "SPC", "SGT", "1LT", "CPT"];
+const ranks = ["PVT", "PV2", "PFC", "SPC", "SGT", "1LT", "CPT", "SSG", "SFC", "2LT"];
 let usedKeys = new Set();
-const lastNames = ["Smith", "Johnson", "Taylor", "White", "Lee", "Martinez", "Stapleton", "Brown"];
+const lastNames = ["Smith", "Johnson", "Taylor", "White", "Lee", "Martinez", "Stapleton", "Brown", "Meese", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Wilson", "Anderson", "Thomas", "Hernandez", "Moore", "Martin"];
 
 export function generateName(): string {
   return `${ranks[Math.floor(Math.random() * ranks.length)]} ${lastNames[Math.floor(Math.random() * lastNames.length)]}`;
@@ -52,14 +52,19 @@ export function generateCasualty(): Casualty {
     steth: rawVitals.steth
   };
 
-  // Do not compute triage or interventions; let students select
+  // Determine triage and interventions dynamically
+  const triage = profile.triageLogic(state);
+  const requiredInterventions = profile.getRequiredInterventions
+    ? profile.getRequiredInterventions(state, triage)
+    : profile.requiredInterventions || [];
+
   return {
     name: generateName(),
     injury: profile.description,
     triage: "",
     interventions: [],
     deteriorated: false,
-    requiredInterventions: [],
+    requiredInterventions: requiredInterventions,
     vitals,
     dynamicVitals: rawVitals,
     startTime: Date.now(),
@@ -101,14 +106,19 @@ export function generateUniqueCasualties(count: number): Casualty[] {
       steth: rawVitals.steth
     };
 
-    // Do not compute triage or interventions; let students select
+    // Determine triage and interventions dynamically
+    const triage = profile.triageLogic(state);
+    const requiredInterventions = profile.getRequiredInterventions
+      ? profile.getRequiredInterventions(state, triage)
+      : profile.requiredInterventions || [];
+
     return {
       name: generateName(),
       injury: profile.description,
       triage: "",
       interventions: [],
       deteriorated: false,
-      requiredInterventions: [],
+      requiredInterventions: requiredInterventions,
       vitals,
       dynamicVitals: rawVitals,
       startTime: now,

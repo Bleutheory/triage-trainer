@@ -55,16 +55,18 @@ const TriageBoard: FC<TriageBoardProps> = ({
 
   useEffect(() => {
     const stored = localStorage.getItem('casualties');
-    const loaded: Casualty[] = stored ? JSON.parse(stored) : [];
-    const includesDemo = loaded.some(c => c.isDemo);
-    if (!includesDemo && phase !== 'triage') {
-      const updated = [demoCasualty, ...loaded];
-      setCasualties(updated);
-      localStorage.setItem('casualties', JSON.stringify(updated));
-      broadcast('casualties', updated);
-    } else {
-      setCasualties(loaded);
-    }
+    if (!stored) return;
+  
+    const loaded: Casualty[] = JSON.parse(stored);
+    setCasualties((prev) => {
+      // Prefer latest treatment or triage updates from localStorage
+      return loaded.map((storedCasualty, i) => {
+        const existing = prev[i];
+        return existing && storedCasualty.name === existing.name
+          ? { ...existing, ...storedCasualty }
+          : storedCasualty;
+      });
+    });
   }, [phase, broadcast]);
 
   const initialCasualtyCount = Number(localStorage.getItem('casualtyCount')) || 15;
@@ -87,8 +89,6 @@ const TriageBoard: FC<TriageBoardProps> = ({
     phase,
     onUpdate: updated => {
       setCasualties(updated);
-      localStorage.setItem('casualties', JSON.stringify(updated));
-      broadcast('casualties', updated);
     },
     onNotify: msg => {
       const next = [msg, ...notifications].slice(0, 10);
@@ -123,18 +123,6 @@ const TriageBoard: FC<TriageBoardProps> = ({
     };
     return () => channel.close();
   }, [broadcast, setNotifications]);
-
-  useEffect(() => {
-    if (phase === 'triage') {
-      // Preserve demo casualty
-      setCasualties(prev => {
-        const updated = [...prev];
-        localStorage.setItem('casualties', JSON.stringify(updated));
-        broadcast('casualties', updated);
-        return updated;
-      });
-    }
-  }, [phase, broadcast]);
 
   useEffect(() => {
     const storedReveals = localStorage.getItem('revealedIndexes');

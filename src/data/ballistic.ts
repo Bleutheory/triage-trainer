@@ -82,7 +82,7 @@ const ballistic: Record<string, InjuryProfile> = {
     };
   },
   getRequiredInterventions: (flags, triage) => {
-    return triage === "Immediate" ? ["Abdominal Emergency Trauma Dressing", "Direct Pressure"] : [];
+    return triage === "Immediate" ? [] : [];
   },
   deterioration: {
     pulse: 15,
@@ -266,7 +266,7 @@ const ballistic: Record<string, InjuryProfile> = {
     };
   },
   getRequiredInterventions: (flags, triage) => {
-    return triage === "Delayed" ? ["Direct Pressure", "Bandage"] : [];
+    return triage === "Delayed" ? ["ETD"] : [];
   }
 },
 
