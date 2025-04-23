@@ -16,15 +16,6 @@ export function generateName(): string {
   return `${ranks[Math.floor(Math.random() * ranks.length)]} ${lastNames[Math.floor(Math.random() * lastNames.length)]}`;
 }
 
-function computeRequiredInterventions(profile: any, state: Record<string, boolean>): { triage: string; requiredInterventions: string[] } {
-  const triage = profile.triageLogic(state);
-  const requiredInterventions = profile.getRequiredInterventions
-    ? profile.getRequiredInterventions(state, triage)
-    : triage === "Immediate"
-    ? profile.requiredInterventions || []
-    : [];
-  return { triage, requiredInterventions };
-}
 
 export function generateCasualty(): Casualty {
   const keys = Object.keys(injuryProfiles).filter(key => !usedKeys.has(key));
@@ -61,15 +52,14 @@ export function generateCasualty(): Casualty {
     steth: rawVitals.steth
   };
 
-  const { triage, requiredInterventions } = computeRequiredInterventions(profile, state);
-
+  // Do not compute triage or interventions; let students select
   return {
     name: generateName(),
     injury: profile.description,
-    triage,
+    triage: "",
     interventions: [],
     deteriorated: false,
-    requiredInterventions,
+    requiredInterventions: [],
     vitals,
     dynamicVitals: rawVitals,
     startTime: Date.now(),
@@ -111,15 +101,14 @@ export function generateUniqueCasualties(count: number): Casualty[] {
       steth: rawVitals.steth
     };
 
-    const { triage, requiredInterventions } = computeRequiredInterventions(profile, state);
-
+    // Do not compute triage or interventions; let students select
     return {
       name: generateName(),
       injury: profile.description,
-      triage,
+      triage: "",
       interventions: [],
       deteriorated: false,
-      requiredInterventions,
+      requiredInterventions: [],
       vitals,
       dynamicVitals: rawVitals,
       startTime: now,
