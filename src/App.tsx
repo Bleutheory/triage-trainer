@@ -10,8 +10,6 @@ import AARPage from './components/AARPage/AARPage';
 import PhaseControls from './components/TriageBoard/PhaseControls';
 import './style.css';
 
-type HookPhase = 'setup' | 'scenario-brief' | 'triage' | 'aar';
-
 const safeGetItem = (key: string): string | null => {
   try {
     return localStorage.getItem(key);
@@ -36,40 +34,35 @@ const App: FC = () => {
     setPhase,
     phase,
     aidBag,
+    notifications,
+    setNotifications,
+    setAidBag,
   } = useAppContext();
 
-  // Map app-phase into the hook’s phase key
-  const hookPhase: HookPhase = (() => {
+  const hookPhase = (() => {
     switch (phase) {
-      case 'packing':
-        return 'setup';
-      case 'brief':
-        return 'scenario-brief';
-      case 'triage':
-        return 'triage';
-      case 'aar':
-        return 'aar';
-      default:
-        return 'setup';
+      case 'packing': return 'setup';
+      case 'brief': return 'scenario-brief';
+      case 'triage': return 'triage';
+      case 'aar': return 'aar';
+      default: return 'setup';
     }
   })();
 
-  // Unified timer label for header
-  const timerLabel = usePhaseTimer(hookPhase, {
+  const timerLabel = usePhaseTimer(hookPhase as any, {
     packDuration,
     briefDuration,
     triageLimit,
   });
 
-  // Handlers
   const onStartPacking = () => {
-    const end = Date.now() + packDuration * 60_000;
+    const end = Date.now() + packDuration * 60000;
     safeSetItem('packingEndTime', String(end));
     setPhase('packing');
   };
 
   const onStartBrief = () => {
-    const end = Date.now() + briefDuration * 60_000;
+    const end = Date.now() + briefDuration * 60000;
     safeSetItem('briefEndTime', String(end));
     setPhase('brief');
   };
@@ -78,20 +71,18 @@ const App: FC = () => {
     const count = Number(safeGetItem('casualtyCount')) || 15;
     const list = generateUniqueCasualties(count);
     safeSetItem('casualties', JSON.stringify(list));
-  
-    if (typeof window !== 'undefined') {
-      const channel = new BroadcastChannel('triage-updates');
-      channel.postMessage({ type: 'casualties', payload: list });
-      channel.close();
-    }
-  
+
+    const channel = new BroadcastChannel('triage-updates');
+    channel.postMessage({ type: 'casualties', payload: list });
+    channel.close();
+
     const now = Date.now();
-    const end = now + triageLimit * 60_000;
+    const end = now + triageLimit * 60000;
     safeSetItem('triageEndTime', String(end));
-  
+
     localStorage.removeItem('packingEndTime');
     localStorage.removeItem('briefEndTime');
-  
+
     setPhase('triage');
   };
 
@@ -101,7 +92,7 @@ const App: FC = () => {
 
   const onRestart = () => {
     localStorage.clear();
-  
+
     const jane = {
       name: 'SPC Jane Doe (Demo)',
       injury: 'Traumatic left leg amputation with severe arterial bleeding',
@@ -116,11 +107,23 @@ const App: FC = () => {
       triageTime: null,
       isDemo: true,
     };
-  
+
     localStorage.setItem('casualties', JSON.stringify([jane]));
     localStorage.setItem('revealedIndexes', JSON.stringify([0]));
-  
+
     window.location.reload();
+  };
+
+  const removeItem = (item: string) => {
+    setAidBag((prev) => {
+      const updated = { ...prev };
+      if (updated[item] > 1) {
+        updated[item] -= 1;
+      } else {
+        delete updated[item];
+      }
+      return updated;
+    });
   };
 
   return (
@@ -171,19 +174,19 @@ const App: FC = () => {
           <section className="aidbag-snapshot">
             <h3>🎒 Aid Bag Contents</h3>
             <ul>
-            {Object.entries(aidBag).map(([item, count]) => (
-  <li
-    key={item}
-    draggable
-    onDragStart={(e) => {
-      e.dataTransfer.setData("text/plain", item);
-      console.log("Dragging from sidebar:", item);
-    }}
-    style={{ cursor: "grab" }}
-  >
-    {item} x{count}
-  </li>
-))}
+              {Object.entries(aidBag).map(([item, count]) => (
+                <li
+                  key={item}
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData("text/plain", item);
+                    console.log("Dragging from sidebar:", item);
+                  }}
+                  style={{ cursor: "grab" }}
+                >
+                  {item} x{count}
+                </li>
+              ))}
             </ul>
           </section>
         </aside>
@@ -191,7 +194,15 @@ const App: FC = () => {
         <main className="main-content">
           {phase === 'packing' && <AidBagSetup isSetupPhase={true} />}
           {phase === 'brief' && <ScenarioBrief />}
-          {phase === 'triage' && <TriagePhase />}
+          {phase === 'triage' && (
+            <TriagePhase
+              aidBag={aidBag}
+              removeItem={removeItem}
+              notifications={notifications}
+              setNotifications={setNotifications}
+              phase={phase}
+            />
+          )}
           {phase === 'aar' && <AARPage />}
         </main>
       </div>

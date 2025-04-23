@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { useAppContext } from '../../context/AppContext';
-// Removed unused useState import
+import { marchCategories } from './interventions';
 
 interface AidBagSetupProps {
   isSetupPhase: boolean;
@@ -21,44 +21,6 @@ const { aidBag, setAidBag } = useAppContext();
       }
       return updated;
     });
-  };
-  const marchCategories = {
-    "Massive Hemorrhage": [
-      "Combat Application Tourniquet (C-A-T)",
-      "Combat Gauze Hemostatic Dressing",
-      "Compressed Gauze ",
-      "Emergency Trauma Dressing - 4 in.",
-      "Abdominal Emergency Trauma Dressing",
-      "Elastic Wrap Bandage - 4 in.",
-      "Elastic Wrap Bandage - 6 in.",
-      "F.A.S.T. 1",
-      "Surgical Tape Roll - 1 in."
-    ],
-    "Airway": [
-      "Nasopharyngeal Airway ",
-      "CRICKIT",
-      "Pocket Mask"
-    ],
-    "Respiratory": [
-      "HyFin Chest Seal ",
-      "Needle Decompression Kit (14 GA x 3.25 IN)",
-      "Bag-Valve Mask (BVM)"
-    ],
-    "Circulation": [
-      "IV Fluid NS",
-      "Pelvic Binder",
-      "Triangular Bandage"
-    ],
-    "Head Injury / Hypothermia": [
-      "Emergency Survival Blanket",
-      "Sterile Burn Sheet - 60 x 96 in.",
-      "FOX Eye Shield ",
-      "Cervical Spine Collar"
-    ],
-    "PPE & Misc": [
-      "PPE Kit - Gloves, Mask, Eye Protection",
-      "Flexible Adhesive Bandages"
-    ]
   };
 
   const [openCategories, setOpenCategories] = React.useState<Record<string, boolean>>(() => {

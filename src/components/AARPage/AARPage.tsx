@@ -14,6 +14,13 @@ const AARPage: FC = () => {
     }
   }, []);
 
+  // Helper to format BP field for display
+  const formatBP = (bp: string | number | [number, number]): string => {
+    if (typeof bp === 'number') return `↓ systolic ~${Math.abs(bp)}`;
+    if (Array.isArray(bp)) return `${bp[0]}/${bp[1]}`;
+    return bp;
+  };
+
   return (
     <section>
       <h2>After Action Review</h2>
@@ -27,7 +34,7 @@ const AARPage: FC = () => {
             <th>Time to Treat</th>
             <th>Time to Triage</th>
             <th>Vitals</th>
-        <th>Deteriorated?</th>
+            <th>Deteriorated?</th>
           </tr>
         </thead>
         <tbody>
@@ -40,9 +47,9 @@ const AARPage: FC = () => {
               <td>{c.treatmentTime != null ? `${c.treatmentTime}s` : '--'}</td>
               <td>{c.triageTime != null ? `${c.triageTime}s` : '--'}</td>
               <td>
-                Pulse: {c.vitals.pulse}, Resp: {c.vitals.respiratory}, BP: {c.vitals.bp}, SpO2: {c.vitals.spo2}
+                Pulse: {c.vitals.pulse}, Resp: {c.vitals.respiratory}, BP: {formatBP(c.vitals.bp)}, SpO2: {c.vitals.spo2}
               </td>
-          <td>{c.deteriorated ? "Yes" : "No"}</td>
+              <td>{c.deteriorated ? "Yes" : "No"}</td>
             </tr>
           ))}
         </tbody>

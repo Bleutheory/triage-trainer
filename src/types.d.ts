@@ -1,4 +1,3 @@
-
 // src/types.d.ts
 
 export interface Intervention {
@@ -9,7 +8,7 @@ export interface Intervention {
 export interface Vitals {
   pulse: number | [number, number];
   respiratory: number | [number, number];
-  bp: string | [number, number];
+  bp: string | number | [number, number];
   spo2: number | [number, number];
   airway: string;
   steth: string;
@@ -17,15 +16,20 @@ export interface Vitals {
 
 export interface InjuryProfile {
   description: string;
-  requiredInterventions?: string[];
-  triageLogic: (state: Record<string, boolean>) => string;
-  vitals: (state: Record<string, boolean>) => Vitals;
-  deterioration?: Partial<Record<keyof Vitals, number | string>>;
-  arterialBleedChance?: number;
+  triageLogic: (flags: Record<string, boolean>) => string;
+  vitals: (flags: Record<string, boolean>) => Vitals;
+  deterioration?: Partial<Vitals> & { steth?: string };
+  airwayCompromiseChance?: number;
   internalBleedChance?: number;
   pneumoChance?: number;
-  airwayCompromiseChance?: number;
+  arterialBleedChance?: number;
   amsChance?: number;
+
+  /** Static fallback if dynamic not defined */
+  requiredInterventions?: string[];
+
+  /** Optional dynamic generator: gets priority over static if defined */
+  getRequiredInterventions?: (flags: Record<string, boolean>, triage: string) => string[];
 }
 
 export interface Casualty {

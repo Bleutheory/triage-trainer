@@ -1,31 +1,16 @@
+// src/components/TriageBoard/TriageBoard.tsx
+
 import React, { FC, useEffect, useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import NotificationPanel from './NotificationPanel';
 import CasualtyGrid from './CasualtyGrid';
-import { Casualty, Intervention } from '../../types';
+import { Casualty } from '../../types';
 import { generateCasualty } from '../casualtyGenerator/casualtyGenerator';
 import useCasualtyReveal from '../../hooks/useCasualtyReveal';
 import useScenarioTimer from '../../hooks/useScenarioTimer';
 import useCasualtyDeterioration from '../../hooks/useCasualtyDeterioration';
-import {
-  useResupply
-} from './resupplyManager';
-
-// Demo casualty always present until triage starts
-const demoCasualty: Casualty = {
-  name: 'SPC Jane Doe (Demo)',
-  injury: 'Traumatic left leg amputation with severe arterial bleeding',
-  triage: '',
-  interventions: [],
-  deteriorated: false,
-  requiredInterventions: [],
-  vitals: { pulse: 0, respiratory: 0, bp: '0/0', spo2: 0, airway: '', steth: '' },
-  dynamicVitals: { pulse: 0, respiratory: 0, bp: '0/0', spo2: 0, airway: '', steth: '' },
-  startTime: Date.now(),
-  treatmentTime: null,
-  triageTime: null,
-  isDemo: true,
-};
+import { useResupply } from './resupplyManager';
+import { janeDoe as demoCasualty } from '../CasualtyCard/demoCasualty';
 
 interface TriageBoardProps {
   aidBag: Record<string, number>;
@@ -35,14 +20,6 @@ interface TriageBoardProps {
   phase: string;
 }
 
-// Utility for the deterioration hook
-export const isStabilized = (casualty: Casualty): boolean => {
-  if (!casualty.requiredInterventions?.length) return true;
-  return casualty.requiredInterventions.every(req =>
-    casualty.interventions.some(i => i.name === req && i.count > 0)
-  );
-};
-
 const TriageBoard: FC<TriageBoardProps> = ({
   aidBag,
   removeItem,
@@ -51,10 +28,8 @@ const TriageBoard: FC<TriageBoardProps> = ({
   phase,
 }) => {
   const { broadcast, setAidBag } = useAppContext();
-
   const { onRequestResupply, resupplyDisabled } = useResupply();
 
-  // 1) Resupply timer
   const timerLabel = useScenarioTimer(
     Number(localStorage.getItem('scenarioEndTime') || 0),
     phase as any
@@ -64,26 +39,24 @@ const TriageBoard: FC<TriageBoardProps> = ({
     const [m, s] = timerLabel.split(':').map(Number);
     setSecondsLeft(m * 60 + s);
   }, [timerLabel]);
-  // Resupply is disabled if either time left on cooldown or resupplyDisabled flag is set
   const resupplyButtonDisabled = secondsLeft > 0 || resupplyDisabled;
   const disableLabel = resupplyButtonDisabled && secondsLeft > 0 ? `${secondsLeft}s` : '';
 
-  // 2) Load casualties & revealed indexes
   const [casualties, setCasualties] = useState<Casualty[]>(() => {
     const stored = localStorage.getItem('casualties');
     const loaded: Casualty[] = stored ? JSON.parse(stored) : [];
     return [demoCasualty, ...loaded];
   });
+
   const [revealedIndexes, setRevealedIndexes] = useState<number[]>(() => {
     const stored = localStorage.getItem('revealedIndexes');
     return stored ? JSON.parse(stored) : [0];
   });
+
   useEffect(() => {
     const stored = localStorage.getItem('casualties');
     const loaded: Casualty[] = stored ? JSON.parse(stored) : [];
     const includesDemo = loaded.some(c => c.isDemo);
-  
-    // If no demo, add Jane back in setup/brief mode
     if (!includesDemo && phase !== 'triage') {
       const updated = [demoCasualty, ...loaded];
       setCasualties(updated);
@@ -94,11 +67,10 @@ const TriageBoard: FC<TriageBoardProps> = ({
     }
   }, [phase, broadcast]);
 
-  // 3) Auto‑reveal hook
-  const initialCasualtyCount = Number(localStorage.getItem("casualtyCount")) || 15;
+  const initialCasualtyCount = Number(localStorage.getItem('casualtyCount')) || 15;
   useCasualtyReveal(
     phase,
-    initialCasualtyCount, // 
+    initialCasualtyCount,
     localStorage.getItem('autoReveal') !== 'false',
     (idx: number) => {
       setRevealedIndexes(prev => {
@@ -109,7 +81,6 @@ const TriageBoard: FC<TriageBoardProps> = ({
     }
   );
 
-  // 4) Deterioration hook
   useCasualtyDeterioration({
     casualties,
     revealedIndexes,
@@ -126,7 +97,6 @@ const TriageBoard: FC<TriageBoardProps> = ({
     },
   });
 
-  // 5) Listen for broadcasts
   useEffect(() => {
     const channel = new BroadcastChannel('triage-updates');
     channel.onmessage = event => {
@@ -154,19 +124,18 @@ const TriageBoard: FC<TriageBoardProps> = ({
     return () => channel.close();
   }, [broadcast, setNotifications]);
 
-  // Strip demo casualty once actual triage begins
   useEffect(() => {
     if (phase === 'triage') {
+      // Preserve demo casualty
       setCasualties(prev => {
-        const filtered = prev.filter(c => !c.isDemo);
-        localStorage.setItem('casualties', JSON.stringify(filtered));
-        broadcast('casualties', filtered);
-        return filtered;
+        const updated = [...prev];
+        localStorage.setItem('casualties', JSON.stringify(updated));
+        broadcast('casualties', updated);
+        return updated;
       });
     }
   }, [phase, broadcast]);
 
-  // Re-sync revealedIndexes on phase change
   useEffect(() => {
     const storedReveals = localStorage.getItem('revealedIndexes');
     if (storedReveals) {
@@ -174,7 +143,6 @@ const TriageBoard: FC<TriageBoardProps> = ({
     }
   }, [phase]);
 
-  // 6) Add casualty handler
   const handleAdd = () => {
     const list = [...casualties, generateCasualty()];
     setCasualties(list);
@@ -182,18 +150,16 @@ const TriageBoard: FC<TriageBoardProps> = ({
     broadcast('casualties', list);
   };
 
-  // Wrap onRequestResupply to pass necessary parameters
   const handleRequestResupply = () => {
     onRequestResupply(aidBag, setAidBag, setNotifications, setCasualties);
   };
-  
-  // Apply item to a casualty; demo casualties do not consume supplies
+
   const handleApplyItem = (index: number, item: string) => {
     setCasualties(prev => {
       const updated = prev.map((c, i) => {
         if (i !== index) return c;
         if (!c.isDemo) removeItem(item);
-        const interventions: Intervention[] = c.interventions.map(inter => ({ ...inter }));
+        const interventions = [...c.interventions];
         const existing = interventions.find(inter => inter.name === item);
         if (existing) {
           existing.count += 1;
@@ -229,6 +195,13 @@ const TriageBoard: FC<TriageBoardProps> = ({
         setNotifications={setNotifications}
       />
     </section>
+  );
+};
+
+export const isStabilized = (casualty: Casualty): boolean => {
+  if (!casualty.requiredInterventions?.length) return true;
+  return casualty.requiredInterventions.every(req =>
+    casualty.interventions.some(i => i.name === req && i.count > 0)
   );
 };
 

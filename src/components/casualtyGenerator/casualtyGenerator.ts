@@ -1,7 +1,8 @@
 // @ts-ignore: allow importing CSS modules
+// src/components/casualtyGenerator/casualtyGenerator.ts
 
-import { Casualty, Vitals } from '../../types'; // Ensure Casualty is correctly defined in '../../types'
-import injuryProfiles from '../../data/injuryProfiles'; // Adjust the path to match the actual export location of injury profiles
+import { Casualty, Vitals } from '../../types';
+import injuryProfiles from '../../data/injuryProfiles';
 
 function getRandomInRange(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -15,10 +16,20 @@ export function generateName(): string {
   return `${ranks[Math.floor(Math.random() * ranks.length)]} ${lastNames[Math.floor(Math.random() * lastNames.length)]}`;
 }
 
+function computeRequiredInterventions(profile: any, state: Record<string, boolean>): { triage: string; requiredInterventions: string[] } {
+  const triage = profile.triageLogic(state);
+  const requiredInterventions = profile.getRequiredInterventions
+    ? profile.getRequiredInterventions(state, triage)
+    : triage === "Immediate"
+    ? profile.requiredInterventions || []
+    : [];
+  return { triage, requiredInterventions };
+}
+
 export function generateCasualty(): Casualty {
   const keys = Object.keys(injuryProfiles).filter(key => !usedKeys.has(key));
   if (keys.length === 0) {
-    usedKeys.clear(); // Reset once all keys have been used
+    usedKeys.clear();
     return generateCasualty();
   }
   const randomKey = keys[Math.floor(Math.random() * keys.length)];
@@ -33,33 +44,32 @@ export function generateCasualty(): Casualty {
     arterial: Math.random() < 0.5
   };
 
-const rawVitals = (typeof profile.vitals === 'function' ? profile.vitals(state) : {}) as Vitals; // Ensure `profile.vitals` is a valid function
-const get = (range: number | [number, number]): number => {
-  if (Array.isArray(range)) {
-    const [min, max] = range;
-    return getRandomInRange(min, max);
-  }
-  return range;
-};
-
-  // Removed unused bpSystolic and bpDiastolic variables
+  const rawVitals = profile.vitals(state) as Vitals;
+  const get = (range: number | [number, number]): number =>
+    Array.isArray(range) ? getRandomInRange(range[0], range[1]) : range;
 
   const vitals = {
     pulse: get(rawVitals.pulse),
     respiratory: get(rawVitals.respiratory),
-    bp: `${getRandomInRange(Number(rawVitals.bp[0]), Number(rawVitals.bp[1]))}/${getRandomInRange(40, 60)}`,
+    bp: Array.isArray(rawVitals.bp)
+      ? `${getRandomInRange(rawVitals.bp[0], rawVitals.bp[1])}/${getRandomInRange(40, 60)}`
+      : typeof rawVitals.bp === 'number'
+        ? `↓ systolic ~${Math.abs(rawVitals.bp)}`
+        : rawVitals.bp,
     spo2: get(rawVitals.spo2),
     airway: rawVitals.airway,
     steth: rawVitals.steth
   };
 
+  const { triage, requiredInterventions } = computeRequiredInterventions(profile, state);
+
   return {
     name: generateName(),
     injury: profile.description,
-    triage: "",
+    triage,
     interventions: [],
     deteriorated: false,
-    requiredInterventions: profile.requiredInterventions || [],
+    requiredInterventions,
     vitals,
     dynamicVitals: rawVitals,
     startTime: Date.now(),
@@ -85,39 +95,31 @@ export function generateUniqueCasualties(count: number): Casualty[] {
     };
 
     const rawVitals = profile.vitals(state);
-    const get = (range: any): any => {
-      if (Array.isArray(range[0]) && Array.isArray(range[1])) {
-        return [
-          getRandomInRange((range[0] as number[])[0], (range[0] as number[])[1]),
-          getRandomInRange((range[1] as number[])[0], (range[1] as number[])[1])
-        ];
-      }
-      if (Array.isArray(range)) return getRandomInRange((range as number[])[0], (range as number[])[1]);
-      return range;
-    };
-
-    const bpSystolic = getRandomInRange(
-      Number(rawVitals.bp[0]),
-      Number(rawVitals.bp[1])
-    );
-    const bpDiastolic = getRandomInRange(40, 60);
+    const get = (range: any): any =>
+      Array.isArray(range) ? getRandomInRange(range[0], range[1]) : range;
 
     const vitals = {
       pulse: get(rawVitals.pulse),
       respiratory: get(rawVitals.respiratory),
-      bp: `${bpSystolic}/${bpDiastolic}`,
-      spo2: Number(get(rawVitals.spo2)),
+      bp: Array.isArray(rawVitals.bp)
+        ? `${getRandomInRange(rawVitals.bp[0], rawVitals.bp[1])}/${getRandomInRange(40, 60)}`
+        : typeof rawVitals.bp === 'number'
+          ? `↓ systolic ~${Math.abs(rawVitals.bp)}`
+          : rawVitals.bp,
+      spo2: get(rawVitals.spo2),
       airway: rawVitals.airway,
       steth: rawVitals.steth
     };
 
+    const { triage, requiredInterventions } = computeRequiredInterventions(profile, state);
+
     return {
       name: generateName(),
       injury: profile.description,
-      triage: "",
+      triage,
       interventions: [],
       deteriorated: false,
-      requiredInterventions: profile.requiredInterventions || [],
+      requiredInterventions,
       vitals,
       dynamicVitals: rawVitals,
       startTime: now,

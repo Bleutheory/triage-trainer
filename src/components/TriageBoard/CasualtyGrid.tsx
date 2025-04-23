@@ -26,10 +26,9 @@ const CasualtyGrid: React.FC<CasualtyGridProps> = ({
   <div className="casualty-grid">
     {casualties
       .map((casualty, index) => ({ casualty, index }))
-      .filter(({ casualty, index }) => {
-        if (casualty.isDemo && phase === 'triage') return false;
-        return revealedIndexes.includes(index) || casualty.isDemo;
-      })
+      .filter(({ casualty, index }) =>
+        revealedIndexes.includes(index) || casualty.isDemo
+      )
       .sort((a, b) => {
         const order: Record<string, number> = { '': 0, Immediate: 1, Delayed: 2, Minimal: 3, Expectant: 4 };
         if (!a.casualty.triage && !b.casualty.triage) {

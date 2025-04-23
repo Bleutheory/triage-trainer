@@ -1,24 +1,21 @@
-// @ts-ignore: allow importing CSS modules
 import React, { FC } from 'react';
-import { useAppContext } from '../../context/AppContext';
-// @ts-ignore: Allow importing JS module without type declarations
 import TriageBoard from '../TriageBoard/TriageBoard';
 
-const TriagePhase: FC = () => {
-  const { aidBag, setAidBag, notifications, setNotifications, phase } = useAppContext();
+interface TriagePhaseProps {
+  aidBag: Record<string, number>;
+  removeItem: (item: string) => void;
+  notifications: string[];
+  setNotifications: React.Dispatch<React.SetStateAction<string[]>>;
+  phase: string;
+}
 
-  const removeItem = (item: string) => {
-    setAidBag(prev => {
-      const updated = { ...prev };
-      if (updated[item] > 1) {
-        updated[item] = updated[item] - 1;
-      } else {
-        delete updated[item];
-      }
-      return updated;
-    });
-  };
-
+const TriagePhase: FC<TriagePhaseProps> = ({
+  aidBag,
+  removeItem,
+  notifications,
+  setNotifications,
+  phase
+}) => {
   return (
     <section className="page visible" id="triage">
       <h2>Triage Phase</h2>
