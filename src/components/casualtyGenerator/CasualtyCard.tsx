@@ -28,15 +28,15 @@ const CasualtyCard: FC<CasualtyCardProps> = ({ index, aidBag, removeItem, casual
     steth: false
   }));
 
-  const flags = {
-    airway: casualty.vitals.airway.toLowerCase().includes('stridor'),
-    bleeding: !!(casualty.vitals.bp && typeof casualty.vitals.bp === 'string' && casualty.vitals.bp.startsWith('65')),
-    pneumo: casualty.vitals.steth.toLowerCase().includes('tracheal deviation'),
-    ams: false, // Add logic if needed
-    arterial: false, // Add logic if needed
-  };
-
   React.useEffect(() => {
+    const flags = {
+      airway: casualty.vitals.airway.toLowerCase().includes('stridor'),
+      bleeding: !!(casualty.vitals.bp && typeof casualty.vitals.bp === 'string' && casualty.vitals.bp.startsWith('65')),
+      pneumo: casualty.vitals.steth.toLowerCase().includes('tracheal deviation'),
+      ams: false,
+      arterial: false,
+    };
+
     const profile = injuryProfiles[casualty.injury];
     const triage = casualty.triage;
   
@@ -67,7 +67,7 @@ required = profile.getRequiredInterventions(flags, triage);
       localStorage.setItem("casualties", JSON.stringify(updated));
       broadcast("casualties", updated);
     }
-  }, [casualty, index, broadcast, flags]);
+  }, [casualty, index, broadcast]);
 
   const baseClass = 'casualty-card';
   const triageClass = casualty.triage
