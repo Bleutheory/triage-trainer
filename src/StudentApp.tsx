@@ -119,17 +119,22 @@ const StudentApp: FC = () => {
     window.location.reload();
   };
 
-  const removeItem = (item: string) => {
-    setAidBag((prev) => {
-      const updated = { ...prev };
-      if (updated[item] > 1) {
-        updated[item] -= 1;
-      } else {
-        delete updated[item];
-      }
-      return updated;
-    });
-  };
+  const removeItem = React.useCallback((item: string) => {
+    // Defer so we’re OUTSIDE the current render phase
+    setTimeout(() => {
+      setAidBag(prev => {
+        const updated = { ...prev };
+        if (updated[item] > 1) {
+          updated[item]--;
+        } else {
+          delete updated[item];
+        }
+        localStorage.setItem("aidBag", JSON.stringify(updated));
+        broadcast("aidBag", updated);
+        return updated;
+      });
+    }, 0);
+  }, [setAidBag, broadcast]);
 
   return (
     <div className="app-container">
