@@ -2,6 +2,7 @@ import React, { FC } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { marchCategories } from './interventions';
 
+
 interface AidBagSetupProps {
   isSetupPhase: boolean;
 }

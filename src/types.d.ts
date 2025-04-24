@@ -33,6 +33,7 @@ export interface InjuryProfile {
 }
 
 export interface Casualty {
+  id: string;   
   name: string;
   injuryKey: string;
   injury: string;

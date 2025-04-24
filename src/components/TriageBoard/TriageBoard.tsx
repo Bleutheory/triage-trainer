@@ -137,25 +137,46 @@ const TriageBoard: FC<TriageBoardProps> = ({
     onRequestResupply(aidBag, setAidBag, setNotifications, setCasualties);
   };
 
-  const handleApplyItem = (index: number, item: string) => {
-    setCasualties(prev => {
-      const updated = prev.map((c, i) => {
-        if (i !== index) return c;
-        if (!c.isDemo) removeItem(item);
-        const interventions = [...c.interventions];
-        const existing = interventions.find(inter => inter.name === item);
-        if (existing) {
-          existing.count += 1;
-        } else {
-          interventions.push({ name: item, count: 1 });
-        }
-        return { ...c, interventions };
-      });
-      localStorage.setItem('casualties', JSON.stringify(updated));
-      broadcast('casualties', updated);
-      return updated;
-    });
-  };
+// Applies one intervention and removes one item from the aid bag
+const handleApplyItem = (index: number, item: string) => {
+  // 1) Update that casualty’s interventions array
+  setCasualties(prev => {
+    const updated = [...prev];
+    const cas = { ...updated[index] };
+    
+    // Look for an existing intervention entry
+    const existing = cas.interventions.find(i => i.name === item);
+    if (existing) {
+      // If it exists, bump its count
+      existing.count += 1;
+    } else {
+      // Otherwise add a new entry
+      cas.interventions = [
+        ...cas.interventions,
+        { name: item, count: 1 }
+      ];
+    }
+    
+    updated[index] = cas;
+    // Persist and broadcast
+    localStorage.setItem("casualties", JSON.stringify(updated));
+    broadcast("casualties", updated);
+    return updated;
+  });
+
+  // 2) Remove one from the aid bag
+  setAidBag(prevBag => {
+    const bag = { ...prevBag };
+    if (bag[item] > 1) {
+      bag[item]--;
+    } else {
+      delete bag[item];
+    }
+    localStorage.setItem("aidBag", JSON.stringify(bag));
+    broadcast("aidBag", bag);
+    return bag;
+  });
+};
 
   return (
     <section className="triage-board">

@@ -1,6 +1,8 @@
+import { v4 as uuid } from 'uuid';
 import { Casualty } from '../../types';
 
 export const janeDoe: Casualty = {
+  id: uuid(),
   name: 'SPC Jane Doe (Demo)',
   injuryKey: 'demo_amputation',
   injury: 'Traumatic left leg amputation with severe arterial bleeding',

@@ -1,6 +1,6 @@
 // @ts-ignore: allow importing CSS modules
 // src/components/casualtyGenerator/casualtyGenerator.ts
-
+import { v4 as uuid } from 'uuid';
 import { Casualty, Vitals } from '../../types';
 import injuryProfiles from '../../data/injuryProfiles';
 
@@ -74,6 +74,7 @@ export function generateCasualty(): Casualty {
     : profile.requiredInterventions || [];
 
   return {
+    id: uuid(),
     name: generateName(),
     injury: profile.description,
     injuryKey: randomKey,
@@ -129,6 +130,7 @@ export function generateUniqueCasualties(count: number): Casualty[] {
       : profile.requiredInterventions || [];
 
     return {
+      id: uuid(),
       name: generateName(),
       injuryKey: key,
       injury: profile.description,

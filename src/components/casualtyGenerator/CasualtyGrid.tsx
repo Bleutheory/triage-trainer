@@ -40,7 +40,7 @@ const CasualtyGrid: React.FC<CasualtyGridProps> = ({
       })
       .map(({ casualty, index }) => (
         <div
-        key={`${casualty.name}-${casualty.startTime}`}
+        key={casualty.id}
           onDragOver={e => e.preventDefault()}
           onDrop={e => {
             e.preventDefault();

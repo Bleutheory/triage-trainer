@@ -1,6 +1,7 @@
 import { Dispatch, SetStateAction } from 'react';
 import { useState, useEffect } from 'react';
 import { Casualty } from '../../types';
+import { v4 as uuid } from 'uuid';
 
 const MAX_RESUPPLIES = 3;
 
@@ -22,6 +23,7 @@ export function disableResupply() {
 
 export function generateSnuffyCasualty(): Casualty {
   return {
+    id: uuid(),
     name: "PVT Snuffy",
     injuryKey: "minor_tibia_fracture",
     injury: "Minor tibia fracture with swelling and full distal pulse",

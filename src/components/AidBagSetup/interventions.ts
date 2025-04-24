@@ -42,10 +42,23 @@ export function normalizeInterventionName(name: string): string | string[] {
   const aliasMap: Record<string, string | string[]> = {
     "Combat Gauze Hemostatic Dressing": "Combat Gauze",
     "Compressed Gauze": "Compressed Gauze",
-    "Emergency Trauma Dressing - 4 in.": "ETD",
+    "Emergency Trauma Dressing - 4 in.": "Emergency Trauma Dressing",
+    "Emergency Trauma Dressing": "Emergency Trauma Dressing",
+    "Abdominal Emergency Trauma Dressing": "Emergency Trauma Dressing",
+    "Elastic Wrap Bandage - 4 in.": "Direct Pressure",
+    "Elastic Wrap Bandage - 6 in.": "Direct Pressure",
+    "F.A.S.T. 1": "F.A.S.T. 1",
+    "Surgical Tape Roll - 1 in.": "Surgical Tape Roll - 1 in.",
     "C-A-T® Combat Application Tourniquet": "Tourniquet",
+    "Combat Application Tourniquet (C-A-T)": "Tourniquet",
     "Combat Gauze® Z-fold Hemostatic": "Combat Gauze",
-    "Wound Pack": ["Compressed Gauze", "Combat Gauze"], 
+    "Wound Pack": ["Compressed Gauze", "Combat Gauze"],
+    "HyFin Chest Seal": "Chest Seal",
+    "Chest Seal": "Chest Seal",
+    "Needle Decompression Kit (14 GA x 3.25 IN)": "Needle Decompression",
+    "Needle Decompression": "Needle Decompression",
+    "Bag-Valve Mask (BVM)": "Bag-Valve Mask",
+    // any other aliases…
   };
   return aliasMap[name.trim()] || name.trim();
 }

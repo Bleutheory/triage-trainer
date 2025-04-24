@@ -87,10 +87,14 @@ required = profile.getRequiredInterventions(flags, triage);
     airway: "Request Airway Status",
     steth: "Request Lung Sounds"
   };
-  const reveals = JSON.parse(localStorage.getItem("revealedIndexes") || "[]") as number[];
-  const nextReveals = Array.from(new Set([...reveals, index]));
-  localStorage.setItem("revealedIndexes", JSON.stringify(nextReveals));
-  broadcast("revealedIndexes", nextReveals);
+  // Reveal logic moved to useEffect below
+
+  React.useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem("revealedIndexes") || "[]") as number[];
+    const updated = Array.from(new Set([...stored, index]));
+    localStorage.setItem("revealedIndexes", JSON.stringify(updated));
+    broadcast("revealedIndexes", updated);
+  }, [index, broadcast]);
   
   return (
     <div className={fullClassName}>
