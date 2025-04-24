@@ -76,6 +76,7 @@ export function generateCasualty(): Casualty {
   return {
     name: generateName(),
     injury: profile.description,
+    injuryKey: randomKey,
     triage: "",
     interventions: [],
     deteriorated: false,
@@ -129,6 +130,7 @@ export function generateUniqueCasualties(count: number): Casualty[] {
 
     return {
       name: generateName(),
+      injuryKey: key,
       injury: profile.description,
       triage: "",
       interventions: [],

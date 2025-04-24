@@ -5,7 +5,7 @@ import usePhaseTimer from './hooks/usePhaseTimer';
 import { generateUniqueCasualties } from './components/casualtyGenerator/casualtyGenerator';
 import AidBagSetup from './components/AidBagSetup/AidBagSetup';
 import ScenarioBrief from './components/ScenarioBrief/ScenarioBrief';
-import TriagePhase from './components/TriagePhase/TriagePhase';
+import TriagePhase from './components/casualtyGenerator/TriagePhase';
 import AARPage from './components/AARPage/AARPage';
 import PhaseControls from './components/TriageBoard/PhaseControls';
 import './style.css';

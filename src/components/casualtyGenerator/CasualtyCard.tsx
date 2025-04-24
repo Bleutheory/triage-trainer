@@ -2,7 +2,7 @@
 import React, { FC, useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Casualty, Vitals } from '../../types';
-import { generateCasualty } from '../casualtyGenerator/casualtyGenerator';
+import { generateCasualty } from './casualtyGenerator';
 import { normalizeInterventionName } from '../AidBagSetup/interventions';
 import injuryProfiles from '../../data';
 

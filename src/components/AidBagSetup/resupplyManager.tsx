@@ -23,6 +23,7 @@ export function disableResupply() {
 export function generateSnuffyCasualty(): Casualty {
   return {
     name: "PVT Snuffy",
+    injuryKey: "minor_tibia_fracture",
     injury: "Minor tibia fracture with swelling and full distal pulse",
     triage: "",
     interventions: [],

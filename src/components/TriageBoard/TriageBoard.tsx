@@ -3,14 +3,14 @@
 import React, { FC, useEffect, useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import NotificationPanel from './NotificationPanel';
-import CasualtyGrid from './CasualtyGrid';
+import CasualtyGrid from '../casualtyGenerator/CasualtyGrid';
 import { Casualty } from '../../types';
 import { generateCasualty } from '../casualtyGenerator/casualtyGenerator';
 import useCasualtyReveal from '../../hooks/useCasualtyReveal';
 import useScenarioTimer from '../../hooks/useScenarioTimer';
 import useCasualtyDeterioration from '../../hooks/useCasualtyDeterioration';
-import { useResupply } from './resupplyManager';
-import { janeDoe as demoCasualty } from '../CasualtyCard/demoCasualty';
+import { useResupply } from '../AidBagSetup/resupplyManager';
+import { janeDoe as demoCasualty } from './demoCasualty';
 
 interface TriageBoardProps {
   aidBag: Record<string, number>;
@@ -56,17 +56,8 @@ const TriageBoard: FC<TriageBoardProps> = ({
   useEffect(() => {
     const stored = localStorage.getItem('casualties');
     if (!stored) return;
-  
     const loaded: Casualty[] = JSON.parse(stored);
-    setCasualties((prev) => {
-      // Prefer latest treatment or triage updates from localStorage
-      return loaded.map((storedCasualty, i) => {
-        const existing = prev[i];
-        return existing && storedCasualty.name === existing.name
-          ? { ...existing, ...storedCasualty }
-          : storedCasualty;
-      });
-    });
+    setCasualties(loaded);
   }, [phase, broadcast]);
 
   const initialCasualtyCount = Number(localStorage.getItem('casualtyCount')) || 15;
@@ -87,7 +78,9 @@ const TriageBoard: FC<TriageBoardProps> = ({
     casualties,
     revealedIndexes,
     phase,
-    onUpdate: updated => {
+    onUpdate: () => {
+      const stored = localStorage.getItem('casualties');
+      const updated = stored ? JSON.parse(stored) : [];
       setCasualties(updated);
     },
     onNotify: msg => {
@@ -108,7 +101,9 @@ const TriageBoard: FC<TriageBoardProps> = ({
           window.location.reload();
           break;
         case 'casualties':
-          setCasualties(payload);
+          const stored = localStorage.getItem('casualties');
+          const latest = stored ? JSON.parse(stored) : payload;
+          setCasualties(latest);
           break;
         case 'notifications':
           setNotifications(payload);

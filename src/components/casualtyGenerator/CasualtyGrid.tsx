@@ -1,7 +1,7 @@
 
 
 import React from 'react';
-import CasualtyCard from '../CasualtyCard/CasualtyCard';
+import CasualtyCard from './CasualtyCard';
 import { Casualty } from '../../types';
 
 interface CasualtyGridProps {

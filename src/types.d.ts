@@ -34,6 +34,7 @@ export interface InjuryProfile {
 
 export interface Casualty {
   name: string;
+  injuryKey: string;
   injury: string;
   triage: string;
   interventions: Intervention[];

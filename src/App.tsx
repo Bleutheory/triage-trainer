@@ -1,7 +1,7 @@
 // src/App.tsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import InstructorDashboard from './components/InstructorDashboard/InstructorDashboard';
+import InstructorDashboard from './components/ScenarioBrief/InstructorDashboard';
 import StudentApp from './StudentApp';
 
 const App: React.FC = () => {
