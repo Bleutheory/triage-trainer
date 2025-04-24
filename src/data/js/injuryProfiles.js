@@ -1,9 +1,7 @@
 "use strict";
 exports.__esModule = true;
 exports.injuryProfiles = exports.getCauseForKey = exports.injuryKeysByCause = void 0;
-/* ------------------------------------------------------------
-   Reorganized helpers and categories
-   ------------------------------------------------------------ */
+
 exports.injuryKeysByCause = {
     ballistic: [
         "gsw_abdomen_multiple", "tq_upper_leg_arterial", "gsw_chest", "gsw_leg",
