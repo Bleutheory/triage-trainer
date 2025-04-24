@@ -1,13 +1,12 @@
-import './InstructorDashboard.css';
 
 import React, { FC, useEffect, useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
-import { Casualty, Intervention } from '../../types';
+import { Casualty } from '../../types';
 // @ts-ignore: allow importing JS module without type declarations
 import { generateCasualty } from '../casualtyGenerator/casualtyGenerator';
 
 const InstructorDashboard: FC = () => {
-  const { aidBag, setAidBag, phase, broadcast } = useAppContext();
+  const { setAidBag, broadcast } = useAppContext();
   const [casualties, setCasualties] = useState<Casualty[]>([]);
   const [scenarioTimeLimit, setScenarioTimeLimit] = useState(() => {
     return Number(localStorage.getItem("scenarioTimeLimit")) || 20;
@@ -46,6 +45,18 @@ const InstructorDashboard: FC = () => {
   return (
     <section style={{ padding: '20px' }}>
       <h2 style={{ marginBottom: '12px' }}>Instructor Dashboard</h2>
+      <div style={{ marginBottom: '1rem' }}>
+  <h3>Scenario Controls</h3>
+  <button onClick={() => broadcast("phase", "packing")}>Start Packing</button>
+  <button onClick={() => broadcast("phase", "brief")}>Start Brief</button>
+  <button onClick={() => broadcast("phase", "triage")}>Start Triage</button>
+  <button onClick={() => broadcast("phase", "aar")}>End Scenario</button>
+  <button onClick={() => {
+    localStorage.clear();
+    broadcast("reset", {});
+    window.location.reload();
+  }}>Reset Everything</button>
+</div>
       <div style={{ marginBottom: "1rem" }}>
         <button
         onClick={() => {

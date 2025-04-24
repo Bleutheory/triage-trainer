@@ -9,7 +9,20 @@ function getRandomInRange(min: number, max: number): number {
 }
 
 const ranks = ["PVT", "PV2", "PFC", "SPC", "SGT", "1LT", "CPT", "SSG", "SFC", "2LT"];
-let usedKeys = new Set();
+const getUsedKeys = (): Set<string> => {
+  const raw = localStorage.getItem('usedInjuryKeys');
+  return new Set(raw ? JSON.parse(raw) : []);
+};
+
+const addUsedKey = (key: string) => {
+  const used = getUsedKeys();
+  used.add(key);
+  localStorage.setItem('usedInjuryKeys', JSON.stringify([...used]));
+};
+
+const resetUsedKeys = () => {
+  localStorage.removeItem('usedInjuryKeys');
+};
 const lastNames = ["Smith", "Johnson", "Taylor", "White", "Lee", "Martinez", "Stapleton", "Brown", "Meese", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Wilson", "Anderson", "Thomas", "Hernandez", "Moore", "Martin"];
 
 export function generateName(): string {
@@ -18,13 +31,15 @@ export function generateName(): string {
 
 
 export function generateCasualty(): Casualty {
+  let usedKeys = getUsedKeys();
   const keys = Object.keys(injuryProfiles).filter(key => !usedKeys.has(key));
   if (keys.length === 0) {
-    usedKeys.clear();
+    resetUsedKeys();
+    usedKeys = new Set();
     return generateCasualty();
   }
   const randomKey = keys[Math.floor(Math.random() * keys.length)];
-  usedKeys.add(randomKey);
+  addUsedKey(randomKey);
 
   const profile = injuryProfiles[randomKey];
   const state = {

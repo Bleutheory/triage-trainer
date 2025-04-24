@@ -67,7 +67,7 @@ required = profile.getRequiredInterventions(flags, triage);
       localStorage.setItem("casualties", JSON.stringify(updated));
       broadcast("casualties", updated);
     }
-  }, [casualty, index, broadcast]);
+  }, [casualty, index, broadcast, flags]);
 
   const baseClass = 'casualty-card';
   const triageClass = casualty.triage
