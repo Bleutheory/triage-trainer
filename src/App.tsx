@@ -2,7 +2,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import InstructorDashboard from './components/ScenarioBrief/InstructorDashboard';
-import StudentApp from './StudentApp';
+import StudentApp from './Studentapp';
 
 const App: React.FC = () => {
   return (
