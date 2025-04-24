@@ -111,5 +111,9 @@ export default function useCasualtyDeterioration({
         }
       }, delayMs);
     });
+<<<<<<< HEAD
     }, [casualties, revealedIndexes, phase, onNotify, onUpdate]);
+=======
+    }, [casualties, revealedIndexes, phase]);
+>>>>>>> refs/remotes/origin/main
   }
