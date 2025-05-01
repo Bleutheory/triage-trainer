@@ -43,17 +43,18 @@ export default function useCasualtyDeterioration({
       }
   
       const { normalizeInterventionName } = require('../components/AidBagSetup/interventions');
-      const normAppliedList = casualty.interventions.flatMap((i: { name: string }) =>
-        Array.isArray(normalizeInterventionName(i.name))
-          ? normalizeInterventionName(i.name)
-          : [normalizeInterventionName(i.name)]
-      );
-  
-      const stabilized = required.every(req => {
-        const normalizedReq = normalizeInterventionName(req);
-        const normReqList = Array.isArray(normalizedReq) ? normalizedReq : [normalizedReq];
-        return normReqList.some(req => normAppliedList.includes(req));
+
+      const normalizedRequired = required.flatMap(req => {
+        const norm = normalizeInterventionName(req);
+        return Array.isArray(norm) ? norm : [norm];
       });
+
+      const normalizedApplied = casualty.interventions.flatMap(i => {
+        const norm = normalizeInterventionName(i.name);
+        return Array.isArray(norm) ? norm : [norm];
+      });
+
+      const stabilized = normalizedRequired.every(req => normalizedApplied.includes(req));
   
       if (casualty.isDemo || timers.current[index] || !revealedIndexes.includes(index) || stabilized) {
         return;
@@ -91,17 +92,19 @@ export default function useCasualtyDeterioration({
           required = profile?.requiredInterventions || [];
         }
   
-        const normAppliedList = freshCasualty.interventions.flatMap((i: { name: string }) =>
-          Array.isArray(normalizeInterventionName(i.name))
-            ? normalizeInterventionName(i.name)
-            : [normalizeInterventionName(i.name)]
-        );
-  
-        const stabilized = required.every(req => {
-          const normalizedReq = normalizeInterventionName(req);
-          const normReqList = Array.isArray(normalizedReq) ? normalizedReq : [normalizedReq];
-          return normReqList.some(req => normAppliedList.includes(req));
+        const normalizedRequired = required.flatMap(req => {
+          const norm = normalizeInterventionName(req);
+          return Array.isArray(norm) ? norm : [norm];
         });
+
+        const normalizedApplied = freshCasualty.interventions.flatMap(
+          (i: { name: string; count: number }) => {
+            const norm = normalizeInterventionName(i.name);
+            return Array.isArray(norm) ? norm : [norm];
+          }
+        );
+
+        const stabilized = normalizedRequired.every(req => normalizedApplied.includes(req));
   
         if (!stabilized) {
           freshCasualty.deteriorated = true;

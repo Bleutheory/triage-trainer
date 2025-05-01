@@ -42,20 +42,22 @@ const CasualtyCard: FC<CasualtyCardProps> = ({ index, aidBag, removeItem, casual
   
     let required: string[] = [];
     if (profile?.getRequiredInterventions) {
-required = profile.getRequiredInterventions(flags, triage);
+      required = profile.getRequiredInterventions(flags, triage);
     } else {
       required = profile?.requiredInterventions || [];
     }
   
-    const stabilized = required.every(req => {
-      const normalizedReq = normalizeInterventionName(req);
-      return casualty.interventions.some(i => {
-        const applied = normalizeInterventionName(i.name);
-        const normReqList = Array.isArray(normalizedReq) ? normalizedReq : [normalizedReq];
-        const normAppliedList = Array.isArray(applied) ? applied : [applied];
-        return normReqList.some(req => normAppliedList.includes(req));
-      });
+    const normalizedRequired = required.flatMap(req => {
+      const norm = normalizeInterventionName(req);
+      return Array.isArray(norm) ? norm : [norm];
     });
+
+    const normalizedApplied = casualty.interventions.flatMap(i => {
+      const norm = normalizeInterventionName(i.name);
+      return Array.isArray(norm) ? norm : [norm];
+    });
+
+    const stabilized = normalizedRequired.every(req => normalizedApplied.includes(req));
   
     if (stabilized && casualty.treatmentTime == null) {
       const list = JSON.parse(localStorage.getItem("casualties") || "[]");
@@ -221,9 +223,20 @@ required = profile.getRequiredInterventions(flags, triage);
       </div>
       <div>
         <strong>Stabilized:</strong>{" "}
-        {(casualty.requiredInterventions || []).every(req =>
-          casualty.interventions.some(i => i.name === req && i.count > 0)
-        ) ? "Yes" : "No"}
+        {(() => {
+          const required = (casualty.requiredInterventions || []);
+          const normalizedRequired = required.flatMap(req => {
+            const norm = normalizeInterventionName(req);
+            return Array.isArray(norm) ? norm : [norm];
+          });
+
+          const normalizedApplied = casualty.interventions.flatMap(i => {
+            const norm = normalizeInterventionName(i.name);
+            return Array.isArray(norm) ? norm : [norm];
+          });
+
+          return normalizedRequired.every(req => normalizedApplied.includes(req)) ? "Yes" : "No";
+        })()}
       </div>
     </div>
   );

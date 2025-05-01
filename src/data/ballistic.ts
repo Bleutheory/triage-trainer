@@ -271,7 +271,7 @@ const ballistic: Record<string, InjuryProfile> = {
 },
 
   "junctional_groin_bleed": {
-    "description": "Gunshot wound to the groin with arterial bleeding (junctional)",
+    "description": "Gunshot wound to the groin with arterial bleeding",
     "requiredInterventions": [
   "Wound Packing"
 ],
