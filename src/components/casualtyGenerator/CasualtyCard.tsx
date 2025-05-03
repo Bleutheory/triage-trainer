@@ -60,14 +60,17 @@ const CasualtyCard: FC<CasualtyCardProps> = ({ index, aidBag, removeItem, casual
     const stabilized = normalizedRequired.every(req => normalizedApplied.includes(req));
   
     if (stabilized && casualty.treatmentTime == null) {
-      const list = JSON.parse(localStorage.getItem("casualties") || "[]");
-      const updated = list.map((c: Casualty, i: number) =>
-        i === index
-          ? { ...c, treatmentTime: Math.floor((Date.now() - c.startTime) / 1000) }
-          : c
-      );
-      localStorage.setItem("casualties", JSON.stringify(updated));
-      broadcast("casualties", updated);
+      (async () => {
+        const listStr = await window.electronAPI.getItem("casualties");
+        const list = listStr ? JSON.parse(listStr) : [];
+        const updated = list.map((c: Casualty, i: number) =>
+          i === index
+            ? { ...c, treatmentTime: Math.floor((Date.now() - c.startTime) / 1000) }
+            : c
+        );
+        await window.electronAPI.setItem("casualties", JSON.stringify(updated));
+        broadcast("casualties", updated);
+      })();
     }
   }, [casualty, index, broadcast]);
 
@@ -92,10 +95,14 @@ const CasualtyCard: FC<CasualtyCardProps> = ({ index, aidBag, removeItem, casual
   // Reveal logic moved to useEffect below
 
   React.useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("revealedIndexes") || "[]") as number[];
-    const updated = Array.from(new Set([...stored, index]));
-    localStorage.setItem("revealedIndexes", JSON.stringify(updated));
-    broadcast("revealedIndexes", updated);
+    const updateRevealed = async () => {
+      const stored = await window.electronAPI.getItem("revealedIndexes");
+      const parsed = stored ? JSON.parse(stored) : [];
+      const updated = Array.from(new Set([...parsed, index]));
+      await window.electronAPI.setItem("revealedIndexes", JSON.stringify(updated));
+      broadcast("revealedIndexes", updated);
+    };
+    updateRevealed();
   }, [index, broadcast]);
   
   return (
@@ -163,7 +170,7 @@ const CasualtyCard: FC<CasualtyCardProps> = ({ index, aidBag, removeItem, casual
             {(Object.entries(labelMap) as [keyof Vitals, string][]).map(([key, label]) => (
               <li key={key}>
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     setVisibleVitals(v => ({ ...v, [key]: true }));
                     const current = Number(localStorage.getItem("penaltyPoints") || 0);
                     localStorage.setItem("penaltyPoints", String(current + 20));
@@ -185,7 +192,7 @@ const CasualtyCard: FC<CasualtyCardProps> = ({ index, aidBag, removeItem, casual
                       localStorage.setItem("revealedIndexes", JSON.stringify(nextRevealed));
                       broadcast("revealedIndexes", nextRevealed);
                       
-                      const note = `${newCasualty.name} added due to excessive vitals requests!`;
+                      const note = `${(await newCasualty).name} While you were taking vitals, another casualty arrived.`;
                       const oldNotes = JSON.parse(localStorage.getItem("notifications") || "[]");
                       const nextNotes = [note, ...oldNotes].slice(0, 10);
                       localStorage.setItem("notifications", JSON.stringify(nextNotes));

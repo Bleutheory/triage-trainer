@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import TriageBoard from '../TriageBoard/TriageBoard';
+import { TriageBoard } from '../TriageBoard/TriageBoard';
 
 interface TriagePhaseProps {
   aidBag: Record<string, number>;

@@ -1,27 +1,8 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
-const express = require('express');
 
 let mainWindow;
 
-function startInternalServer() {
-  const server = express();
-  const port = 3000;
-
-  server.use(express.static(path.join(__dirname, 'build')));
-
-  server.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'build', 'index.html'));
-  });
-
-  server.listen(port, () => {
-    console.log(`📦 Static server running at http://localhost:${port}`);
-    setTimeout(() => {
-      createInstructorWindow();
-      createStudentWindow();
-    }, 1000);
-  });
-}
 
 function createInstructorWindow() {
   const win = new BrowserWindow({
@@ -29,14 +10,17 @@ function createInstructorWindow() {
     height: 900,
     title: "Instructor View",
     webPreferences: {
-      contextIsolation: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
-      sandbox: false,
-      webSecurity: false,
-      allowRunningInsecureContent: true
+      sandbox: true,
+      webSecurity: true,
     }
   });
-  win.loadURL("http://localhost:3000/instructor");
+  win.loadFile(
+    path.join(__dirname, 'build', 'index.html'),
+    { search: '?role=instructor' }
+  );
 }
 
 function createStudentWindow() {
@@ -45,23 +29,38 @@ function createStudentWindow() {
     height: 900,
     title: "Student View",
     webPreferences: {
-      contextIsolation: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
-      sandbox: false,
-      webSecurity: false,
-      allowRunningInsecureContent: true
+      sandbox: true,
+      webSecurity: true,
     }
   });
-  win.loadURL("http://localhost:3000");
+  win.loadFile(
+    path.join(__dirname, 'build', 'index.html'),
+    { search: '?role=student' }
+  );
 }
+
+// Secure localStorage handlers
+const memoryStore = {};
+
+ipcMain.handle('localStorage:get', (event, key) => {
+  return memoryStore[key] || null;
+});
+
+ipcMain.handle('localStorage:set', (event, key, value) => {
+  memoryStore[key] = value;
+});
 
 app.whenReady().then(() => {
   app.commandLine.appendSwitch('disable-features', 'OutOfBlinkCors');
   app.commandLine.appendSwitch('disable-site-isolation-trials');
-  startInternalServer();
+  // createInstructorWindow();
+  createStudentWindow();
 
   app.on('activate', function () {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (BrowserWindow.getAllWindows().length === 0) createStudentWindow();
   });
 });
 

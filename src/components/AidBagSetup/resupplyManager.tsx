@@ -5,20 +5,22 @@ import { v4 as uuid } from 'uuid';
 
 const MAX_RESUPPLIES = 3;
 
-export function getResupplyCount(): number {
-  return Number(localStorage.getItem('resupplyCount') || 0);
+export async function getResupplyCount(): Promise<number> {
+  const value = await window.electronAPI.getItem('resupplyCount');
+  return Number(value || 0);
 }
 
-export function isResupplyDisabled(): boolean {
-  return localStorage.getItem('resupplyDisabled') === 'true';
+export async function isResupplyDisabled(): Promise<boolean> {
+  const value = await window.electronAPI.getItem('resupplyDisabled');
+  return value === 'true';
 }
 
-export function recordResupplyCount(newCount: number) {
-  localStorage.setItem('resupplyCount', String(newCount));
+export async function recordResupplyCount(newCount: number) {
+  await window.electronAPI.setItem('resupplyCount', String(newCount));
 }
 
-export function disableResupply() {
-  localStorage.setItem('resupplyDisabled', 'true');
+export async function disableResupply() {
+  await window.electronAPI.setItem('resupplyDisabled', 'true');
 }
 
 export function generateSnuffyCasualty(): Casualty {
@@ -59,11 +61,26 @@ export function shouldTriggerSnuffy(count: number): boolean {
 }
 
 export const useResupply = () => {
-  const [resupplyCount, setResupplyCount] = useState<number>(() => Number(localStorage.getItem('resupplyCount') || 0));
-  const [resupplyDisabled, setResupplyDisabled] = useState<boolean>(() => localStorage.getItem('resupplyDisabled') === 'true');
+  const [resupplyCount, setResupplyCount] = useState<number>(0);
+  const [resupplyDisabled, setResupplyDisabled] = useState<boolean>(false);
   const [resupplyCooldown, setResupplyCooldown] = useState<number>(0);
-  const [snuffyDispatchTime, setSnuffyDispatchTime] = useState<number>(() => Number(localStorage.getItem('snuffyDispatchTime') || 0));
-  const [resupplyCooldownUntil, setResupplyCooldownUntil] = useState<number>(() => Number(localStorage.getItem('resupplyCooldownUntil') || 0));
+  const [snuffyDispatchTime, setSnuffyDispatchTime] = useState<number>(0);
+  const [resupplyCooldownUntil, setResupplyCooldownUntil] = useState<number>(0);
+
+  // Async effect to load values from secure storage
+  useEffect(() => {
+    const load = async () => {
+      const count = await window.electronAPI.getItem('resupplyCount');
+      const disabled = await window.electronAPI.getItem('resupplyDisabled');
+      const snuffy = await window.electronAPI.getItem('snuffyDispatchTime');
+      const until = await window.electronAPI.getItem('resupplyCooldownUntil');
+      setResupplyCount(Number(count || 0));
+      setResupplyDisabled(disabled === 'true');
+      setSnuffyDispatchTime(Number(snuffy || 0));
+      setResupplyCooldownUntil(Number(until || 0));
+    };
+    load();
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -77,7 +94,7 @@ export const useResupply = () => {
     return () => clearInterval(interval);
   }, [resupplyCooldownUntil]);
 
-  const onRequestResupply = (
+  const onRequestResupply = async (
     aidBag: Record<string, number>,
     setAidBag: (bag: Record<string, number>) => void,
     setNotifications: Dispatch<SetStateAction<string[]>>,
@@ -85,7 +102,17 @@ export const useResupply = () => {
   ) => {
     const now = Date.now();
 
-    if (resupplyDisabled) {
+    // Always fetch latest disabled/count/snuffy time from secure storage
+    const [disabledStr, snuffyStr, countStr] = await Promise.all([
+      window.electronAPI.getItem('resupplyDisabled'),
+      window.electronAPI.getItem('snuffyDispatchTime'),
+      window.electronAPI.getItem('resupplyCount'),
+    ]);
+    const isDisabled = disabledStr === 'true';
+    const lastSnuffy = Number(snuffyStr || 0);
+    const count = Number(countStr || 0);
+
+    if (isDisabled) {
       setNotifications((prev: string[]) => [
         "No further resupplies available. PVT Snuffy is out of commission.",
         ...prev
@@ -93,7 +120,7 @@ export const useResupply = () => {
       return;
     }
 
-    if (now - snuffyDispatchTime < 120000) {
+    if (now - lastSnuffy < 120000) {
       setNotifications((prev: string[]) => [
         "No one is available to retrieve supplies. Try again later.",
         ...prev
@@ -102,13 +129,13 @@ export const useResupply = () => {
     }
 
     setSnuffyDispatchTime(now);
-    localStorage.setItem('snuffyDispatchTime', String(now));
+    await window.electronAPI.setItem('snuffyDispatchTime', String(now));
     setNotifications((prev: string[]) => [
       "You have sent PVT Snuffy to find some supplies...",
       ...prev
     ]);
 
-    setTimeout(() => {
+    setTimeout(async () => {
       const resupplyItems = {
         "C-A-T® Combat Application Tourniquet": 2,
         "Compressed Gauze": 3,
@@ -121,11 +148,11 @@ export const useResupply = () => {
       }
 
       setAidBag(updatedBag);
-      localStorage.setItem("aidBag", JSON.stringify(updatedBag));
+      await window.electronAPI.setItem("aidBag", JSON.stringify(updatedBag));
 
-      const newCount = resupplyCount + 1;
+      const newCount = count + 1;
       setResupplyCount(newCount);
-      localStorage.setItem('resupplyCount', String(newCount));
+      await window.electronAPI.setItem('resupplyCount', String(newCount));
 
       let arrivalNotes = Object.entries(resupplyItems).map(
         ([item, qty]) => `${qty} x ${item} has arrived and was added to the aid bag.`
@@ -133,24 +160,28 @@ export const useResupply = () => {
 
       if (newCount > MAX_RESUPPLIES) {
         setResupplyDisabled(true);
-        localStorage.setItem('resupplyDisabled', 'true');
-
-        const snuffy = generateSnuffyCasualty();
-        const current = JSON.parse(localStorage.getItem('casualties') || '[]');
-        const updated = [...current, snuffy];
-        setCasualties(updated);
-        localStorage.setItem("casualties", JSON.stringify(updated));
-        arrivalNotes.unshift("PVT Snuffy broke his ankle while retrieving your supplies. He is now a casualty.");
+        await window.electronAPI.setItem('resupplyDisabled', 'true');
+        arrivalNotes.unshift("No further resupplies available. PVT Snuffy is out of commission.");
       }
 
-      setNotifications((prev: string[]) => [...arrivalNotes, ...prev]);
-
-      const cooldownEnds = Date.now() + 60000;
-      setResupplyCooldownUntil(cooldownEnds);
-      localStorage.setItem("resupplyCooldownUntil", String(cooldownEnds));
-
-    }, 60000);
+      setNotifications((prev: string[]) => [
+        ...arrivalNotes,
+        ...prev
+      ]);
+    }, 8000);
   };
 
-  return { onRequestResupply, resupplyDisabled, resupplyCooldown };
-};
+  return {
+    resupplyCount,
+    setResupplyCount,
+    resupplyDisabled,
+    setResupplyDisabled,
+    resupplyCooldown,
+    setResupplyCooldown,
+    snuffyDispatchTime,
+    setSnuffyDispatchTime,
+    resupplyCooldownUntil,
+    setResupplyCooldownUntil,
+    onRequestResupply,
+  };
+}

@@ -20,7 +20,7 @@ interface TriageBoardProps {
   phase: string;
 }
 
-const TriageBoard: FC<TriageBoardProps> = ({
+export const TriageBoard: FC<TriageBoardProps> = ({
   aidBag,
   removeItem,
   notifications,
@@ -30,10 +30,17 @@ const TriageBoard: FC<TriageBoardProps> = ({
   const { broadcast, setAidBag } = useAppContext();
   const { onRequestResupply, resupplyDisabled } = useResupply();
 
-  const timerLabel = useScenarioTimer(
-    Number(localStorage.getItem('scenarioEndTime') || 0),
-    phase as any
-  );
+  // Securely retrieve scenarioEndTime using electronAPI.getItem
+  const [endTime, setEndTime] = useState<number>(0);
+  useEffect(() => {
+    const load = async () => {
+      const raw = await window.electronAPI.getItem('scenarioEndTime');
+      setEndTime(Number(raw || 0));
+    };
+    load();
+  }, []);
+
+  const timerLabel = useScenarioTimer(endTime, phase as any);
   const [secondsLeft, setSecondsLeft] = useState<number>(0);
   useEffect(() => {
     const [m, s] = timerLabel.split(':').map(Number);
@@ -42,33 +49,52 @@ const TriageBoard: FC<TriageBoardProps> = ({
   const resupplyButtonDisabled = secondsLeft > 0 || resupplyDisabled;
   const disableLabel = resupplyButtonDisabled && secondsLeft > 0 ? `${secondsLeft}s` : '';
 
-  const [casualties, setCasualties] = useState<Casualty[]>(() => {
-    const stored = localStorage.getItem('casualties');
-    const loaded: Casualty[] = stored ? JSON.parse(stored) : [];
-    return [demoCasualty, ...loaded];
-  });
+  const [casualties, setCasualties] = useState<Casualty[]>([]);
+  useEffect(() => {
+    const load = async () => {
+      const stored = await window.electronAPI.getItem('casualties');
+      const loaded: Casualty[] = stored ? JSON.parse(stored) : [];
+      setCasualties([demoCasualty, ...loaded]);
+    };
+    load();
+  }, []);
 
-  const [revealedIndexes, setRevealedIndexes] = useState<number[]>(() => {
-    const stored = localStorage.getItem('revealedIndexes');
-    return stored ? JSON.parse(stored) : [0];
-  });
+  const [revealedIndexes, setRevealedIndexes] = useState<number[]>([]);
+  useEffect(() => {
+    const load = async () => {
+      const stored = await window.electronAPI.getItem('revealedIndexes');
+      const parsed = stored ? JSON.parse(stored) : [0];
+      setRevealedIndexes(parsed);
+    };
+    load();
+  }, []);
 
   useEffect(() => {
-    const stored = localStorage.getItem('casualties');
-    if (!stored) return;
-    const loaded: Casualty[] = JSON.parse(stored);
-    setCasualties(loaded);
+    const reload = async () => {
+      const stored = await window.electronAPI.getItem('casualties');
+      if (!stored) return;
+      const loaded: Casualty[] = JSON.parse(stored);
+      setCasualties(loaded);
+    };
+    reload();
   }, [phase, broadcast]);
 
-  const initialCasualtyCount = Number(localStorage.getItem('casualtyCount')) || 15;
+  const [initialCasualtyCount, setInitialCasualtyCount] = useState<number>(15);
+  useEffect(() => {
+    const load = async () => {
+      const val = await window.electronAPI.getItem('casualtyCount');
+      setInitialCasualtyCount(Number(val) || 15);
+    };
+    load();
+  }, []);
   useCasualtyReveal(
     phase,
     initialCasualtyCount,
-    localStorage.getItem('autoReveal') !== 'false',
-    (idx: number) => {
+    true,
+    async (idx: number) => {
       setRevealedIndexes(prev => {
         const next = Array.from(new Set([...prev, idx]));
-        localStorage.setItem('revealedIndexes', JSON.stringify(next));
+        window.electronAPI.setItem('revealedIndexes', JSON.stringify(next));
         return next;
       });
     }
@@ -92,121 +118,55 @@ const TriageBoard: FC<TriageBoardProps> = ({
 
   useEffect(() => {
     const channel = new BroadcastChannel('triage-updates');
-    channel.onmessage = event => {
+    channel.onmessage = async event => {
       const { type, payload } = event.data || {};
       switch (type) {
         case 'phase':
-          localStorage.setItem('phase', payload);
+          await window.electronAPI.setItem('phase', payload);
           broadcast('phase', payload);
           window.location.reload();
           break;
+        case 'aidBag':
+          setAidBag(payload);
+          break;
         case 'casualties':
-          const stored = localStorage.getItem('casualties');
-          const latest = stored ? JSON.parse(stored) : payload;
-          setCasualties(latest);
+          setCasualties(payload);
           break;
         case 'notifications':
           setNotifications(payload);
           break;
-        case 'reset':
-          window.location.reload();
-          break;
-        case 'revealedIndexes':
-          setRevealedIndexes(payload);
+        default:
           break;
       }
     };
     return () => channel.close();
-  }, [broadcast, setNotifications]);
+  }, [broadcast, setAidBag, setNotifications]);
 
-  useEffect(() => {
-    const storedReveals = localStorage.getItem('revealedIndexes');
-    if (storedReveals) {
-      setRevealedIndexes(JSON.parse(storedReveals));
-    }
-  }, [phase]);
-
-  const handleAdd = () => {
-    const list = [...casualties, generateCasualty()];
-    setCasualties(list);
-    localStorage.setItem('casualties', JSON.stringify(list));
-    broadcast('casualties', list);
-  };
-
-  const handleRequestResupply = () => {
-    onRequestResupply(aidBag, setAidBag, setNotifications, setCasualties);
-  };
-
-// Applies one intervention and removes one item from the aid bag
-const handleApplyItem = (index: number, item: string) => {
-  // 1) Update that casualty’s interventions array
-  setCasualties(prev => {
-    const updated = [...prev];
-    const cas = { ...updated[index] };
-    
-    // Look for an existing intervention entry
-    const existing = cas.interventions.find(i => i.name === item);
-    if (existing) {
-      // If it exists, bump its count
-      existing.count += 1;
-    } else {
-      // Otherwise add a new entry
-      cas.interventions = [
-        ...cas.interventions,
-        { name: item, count: 1 }
-      ];
-    }
-    
-    updated[index] = cas;
-    // Persist and broadcast
-    localStorage.setItem("casualties", JSON.stringify(updated));
-    broadcast("casualties", updated);
-    return updated;
-  });
-
-  // 2) Remove one from the aid bag
-  setAidBag(prevBag => {
-    const bag = { ...prevBag };
-    if (bag[item] > 1) {
-      bag[item]--;
-    } else {
-      delete bag[item];
-    }
-    localStorage.setItem("aidBag", JSON.stringify(bag));
-    broadcast("aidBag", bag);
-    return bag;
-  });
-};
-
+  // Render the triage board UI
   return (
-    <section className="triage-board">
-      {phase !== 'triage' && (
-        <button onClick={handleAdd}>➕ Add Casualty</button>
-      )}
+    <div>
       <NotificationPanel
         notifications={notifications}
-        onRequestResupply={handleRequestResupply}
+        onRequestResupply={() =>
+          onRequestResupply(aidBag, setAidBag, setNotifications, setCasualties)
+        }
         resupplyDisabled={resupplyButtonDisabled}
         disableLabel={disableLabel}
       />
-      <CasualtyGrid
-        aidBag={aidBag}
-        casualties={casualties}
-        revealedIndexes={revealedIndexes}
-        phase={phase}
-        removeItem={removeItem}
-        handleApplyItem={handleApplyItem}
-        setNotifications={setNotifications}
-      />
-    </section>
+      <div style={{ marginTop: '2rem' }}>
+        <CasualtyGrid
+          aidBag={aidBag}
+          casualties={casualties}
+          revealedIndexes={revealedIndexes}
+          phase={phase}
+          removeItem={removeItem}
+          handleApplyItem={() => {}}
+          setNotifications={setNotifications}
+        />
+      </div>
+      <div style={{ marginTop: '2rem', fontWeight: 'bold' }}>
+        Scenario Timer: {timerLabel}
+      </div>
+    </div>
   );
 };
-
-export const isStabilized = (casualty: Casualty): boolean => {
-  if (!casualty.requiredInterventions?.length) return true;
-  return casualty.requiredInterventions.every(req =>
-    casualty.interventions.some(i => i.name === req && i.count > 0)
-  );
-};
-
-export default TriageBoard;

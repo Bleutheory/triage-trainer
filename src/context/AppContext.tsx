@@ -27,60 +27,59 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const [aidBag, setAidBag] = useState<Record<string, number>>(() => {
-    const stored = localStorage.getItem('aidBag');
-    return stored ? JSON.parse(stored) : {};
-  });
-
-  const [notifications, setNotifications] = useState<string[]>(() => {
-    const stored = localStorage.getItem('notifications');
-    return stored ? JSON.parse(stored) : [];
-  });
-
-  const [phase, setPhase] = useState<string>(() => {
-    return localStorage.getItem('phase') || 'idle';
-  });
+  const [aidBag, setAidBag] = useState<Record<string, number>>({});
+  const [notifications, setNotifications] = useState<string[]>([]);
+  const [phase, setPhase] = useState<string>('idle');
   // Configurable phase durations (minutes)
-  const [packDuration, setPackDuration] = useState<number>(() =>
-    Number(localStorage.getItem('packDuration')) || 5
-  );
-  const [briefDuration, setBriefDuration] = useState<number>(() =>
-    Number(localStorage.getItem('briefDuration')) || 5
-  );
-  const [triageLimit, setTriageLimit] = useState<number>(() =>
-    Number(localStorage.getItem('triageLimit')) || 20
-  );
+  const [packDuration, setPackDuration] = useState<number>(5);
+  const [briefDuration, setBriefDuration] = useState<number>(5);
+  const [triageLimit, setTriageLimit] = useState<number>(20);
 
   useEffect(() => {
-    localStorage.setItem('aidBag', JSON.stringify(aidBag));
+    const load = async () => {
+      const bag = await window.electronAPI.getItem('aidBag');
+      const notes = await window.electronAPI.getItem('notifications');
+      const savedPhase = await window.electronAPI.getItem('phase');
+      const pack = await window.electronAPI.getItem('packDuration');
+      const brief = await window.electronAPI.getItem('briefDuration');
+      const triage = await window.electronAPI.getItem('triageLimit');
+
+      setAidBag(bag ? JSON.parse(bag) : {});
+      setNotifications(notes ? JSON.parse(notes) : []);
+      setPhase(savedPhase || 'idle');
+      setPackDuration(Number(pack) || 5);
+      setBriefDuration(Number(brief) || 5);
+      setTriageLimit(Number(triage) || 20);
+    };
+    load();
+  }, []);
+
+  useEffect(() => {
+    window.electronAPI.setItem('aidBag', JSON.stringify(aidBag));
     channelRef.current?.postMessage({ type: 'aidBag', payload: aidBag });
   }, [aidBag]);
 
   useEffect(() => {
-    localStorage.setItem('notifications', JSON.stringify(notifications));
-    // channelRef.current?.postMessage({ type: 'notifications', payload: notifications });
+    window.electronAPI.setItem('notifications', JSON.stringify(notifications));
   }, [notifications]);
 
   useEffect(() => {
-    localStorage.setItem('phase', phase);
+    window.electronAPI.setItem('phase', phase);
     channelRef.current?.postMessage({ type: 'phase', payload: phase });
   }, [phase]);
-  
-  // Persist and broadcast pack duration
+
   useEffect(() => {
-    localStorage.setItem('packDuration', String(packDuration));
+    window.electronAPI.setItem('packDuration', String(packDuration));
     channelRef.current?.postMessage({ type: 'settings:packDuration', payload: packDuration });
   }, [packDuration]);
-  
-  // Persist and broadcast brief duration
+
   useEffect(() => {
-    localStorage.setItem('briefDuration', String(briefDuration));
+    window.electronAPI.setItem('briefDuration', String(briefDuration));
     channelRef.current?.postMessage({ type: 'settings:briefDuration', payload: briefDuration });
   }, [briefDuration]);
-  
-  // Persist and broadcast triage time limit
+
   useEffect(() => {
-    localStorage.setItem('triageLimit', String(triageLimit));
+    window.electronAPI.setItem('triageLimit', String(triageLimit));
     channelRef.current?.postMessage({ type: 'settings:triageLimit', payload: triageLimit });
   }, [triageLimit]);
 
