@@ -1,4 +1,4 @@
-// src/App.tsx
+
 import React, { FC } from 'react';
 import { useAppContext } from './context/AppContext';
 import usePhaseTimer from './hooks/usePhaseTimer';
@@ -69,7 +69,7 @@ const StudentApp: FC = () => {
     setPhase('brief');
     broadcast('phase', 'brief');
   };
-
+// This determines the number of casualties to generate
   const onStartTriage = () => {
     const count = Number(safeGetItem('casualtyCount')) || 15;
     const list = generateUniqueCasualties(count);

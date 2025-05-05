@@ -39,14 +39,14 @@ const CasualtyCard: FC<CasualtyCardProps> = ({ index, aidBag, removeItem, casual
 
     const profile = injuryProfiles[casualty.injury];
     const triage = casualty.triage;
-  
+
     let required: string[] = [];
     if (profile?.getRequiredInterventions) {
       required = profile.getRequiredInterventions(flags, triage);
     } else {
       required = profile?.requiredInterventions || [];
     }
-  
+
     const normalizedRequired = required.flatMap(req => {
       const norm = normalizeInterventionName(req);
       return Array.isArray(norm) ? norm : [norm];
@@ -58,7 +58,7 @@ const CasualtyCard: FC<CasualtyCardProps> = ({ index, aidBag, removeItem, casual
     });
 
     const stabilized = normalizedRequired.every(req => normalizedApplied.includes(req));
-  
+
     if (stabilized && casualty.treatmentTime == null) {
       const list = JSON.parse(localStorage.getItem("casualties") || "[]");
       const updated = list.map((c: Casualty, i: number) =>
@@ -97,7 +97,7 @@ const CasualtyCard: FC<CasualtyCardProps> = ({ index, aidBag, removeItem, casual
     localStorage.setItem("revealedIndexes", JSON.stringify(updated));
     broadcast("revealedIndexes", updated);
   }, [index, broadcast]);
-  
+
   return (
     <div className={fullClassName}>
       <h3>{casualty.name}</h3>
@@ -114,10 +114,10 @@ const CasualtyCard: FC<CasualtyCardProps> = ({ index, aidBag, removeItem, casual
             const updated = list.map((c, i) =>
               i === index
                 ? {
-                    ...c,
-                    triage: newTriage,
-                    triageTime: Math.floor((Date.now() - c.startTime) / 1000),
-                  }
+                  ...c,
+                  triage: newTriage,
+                  triageTime: Math.floor((Date.now() - c.startTime) / 1000),
+                }
                 : c
             );
             localStorage.setItem("casualties", JSON.stringify(updated));
@@ -174,24 +174,24 @@ const CasualtyCard: FC<CasualtyCardProps> = ({ index, aidBag, removeItem, casual
                         startTime: Date.now(),
                       };
                       const updated = [...list, newCasualty];
-                    
+
                       localStorage.setItem("casualties", JSON.stringify(updated));
                       localStorage.setItem("penaltyPoints", "0");
                       broadcast("casualties", updated);
-                      
+
                       const revealed = JSON.parse(localStorage.getItem("revealedIndexes") || "[]");
                       const newIndex = updated.length - 1;
                       const nextRevealed = Array.from(new Set([...revealed, newIndex]));
                       localStorage.setItem("revealedIndexes", JSON.stringify(nextRevealed));
                       broadcast("revealedIndexes", nextRevealed);
-                      
+
                       const note = `${newCasualty.name} added due to excessive vitals requests!`;
                       const oldNotes = JSON.parse(localStorage.getItem("notifications") || "[]");
                       const nextNotes = [note, ...oldNotes].slice(0, 10);
                       localStorage.setItem("notifications", JSON.stringify(nextNotes));
                       broadcast("notifications", nextNotes);
                     }
-                  
+
                     console.log(`${casualty.name}: +20 penalty points for requesting ${key}`);
                   }}
                   disabled={visibleVitals[key]}
@@ -222,25 +222,25 @@ const CasualtyCard: FC<CasualtyCardProps> = ({ index, aidBag, removeItem, casual
         </ul>
       </div>
       <div>
-      {showStabilized && (
-  <div>
-    <strong>Stabilized:</strong>{" "}
-    {(() => {
-      const required = casualty.requiredInterventions || [];
-      const normalizedRequired = required.flatMap(req => {
-        const norm = normalizeInterventionName(req);
-        return Array.isArray(norm) ? norm : [norm];
-      });
+        {showStabilized && (
+          <div>
+            <strong>Stabilized:</strong>{" "}
+            {(() => {
+              const required = casualty.requiredInterventions || [];
+              const normalizedRequired = required.flatMap(req => {
+                const norm = normalizeInterventionName(req);
+                return Array.isArray(norm) ? norm : [norm];
+              });
 
-      const normalizedApplied = casualty.interventions.flatMap(i => {
-        const norm = normalizeInterventionName(i.name);
-        return Array.isArray(norm) ? norm : [norm];
-      });
+              const normalizedApplied = casualty.interventions.flatMap(i => {
+                const norm = normalizeInterventionName(i.name);
+                return Array.isArray(norm) ? norm : [norm];
+              });
 
-      return normalizedRequired.every(req => normalizedApplied.includes(req)) ? "Yes" : "No";
-    })()}
-  </div>
-)}
+              return normalizedRequired.every(req => normalizedApplied.includes(req)) ? "Yes" : "No";
+            })()}
+          </div>
+        )}
       </div>
     </div>
   );
