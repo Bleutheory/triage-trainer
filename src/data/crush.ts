@@ -2,7 +2,7 @@ import { InjuryProfile } from '../types';
 
 const crush: Record<string, InjuryProfile> = {
   "crush_injury_torso": {
-    "description": "Crush injury to torso with poor perfusion and suspected organ damage",
+    "description": "Crush injury to torso with poor perfusion",
     "triageLogic": function () { return "Expectant"; },
     "vitals": function () { return ({
             pulse: [120, 140],
@@ -14,7 +14,7 @@ const crush: Record<string, InjuryProfile> = {
         }); }
   },
   "crush_syndrome_immediate": {
-    "description": "Crush syndrome torso/limb entrapped",
+    "description": "Crush injury limb is swollen and discolored, with poor perfusion",
     "requiredInterventions": [
   "Tourniquet",
   "IV Fluid NS"
@@ -37,7 +37,7 @@ const crush: Record<string, InjuryProfile> = {
 }
   },
   "crush_syndrome_delayed": {
-    "description": "Crush injury freed, fluids running",
+    "description": "Crush injury, fluids running",
     "triageLogic": function () { return "Delayed"; },
     "vitals": function () { return ({
             pulse: [90, 105],
@@ -49,7 +49,7 @@ const crush: Record<string, InjuryProfile> = {
         }); }
   },
   "pelvic_crush_injury": {
-    "description": "Crush injury to pelvis with instability and suspected internal bleeding",
+    "description": "Crush injury to pelvis with instability",
     "requiredInterventions": [
   "Pelvic Binder"
 ],
@@ -90,7 +90,7 @@ const crush: Record<string, InjuryProfile> = {
         }); }
   },
   "blunt_force_head_trauma_unresponsive": {
-    "description": "Blunt force trauma to head, unresponsive with decerebrate posturing",
+    "description": "Blunt force trauma to head, unresponsive",
     "triageLogic": function () { return "Expectant"; },
     "vitals": function () { return ({
             pulse: [40, 60],
@@ -117,7 +117,7 @@ const crush: Record<string, InjuryProfile> = {
         }); }
   },
   "babt_chest_delayed": {
-    "description": "BABT chest contusion, stable",
+    "description": "BABT chest contusion",
     "triageLogic": function () { return "Delayed"; },
     "vitals": function () { return ({
             pulse: [92, 105],
@@ -141,7 +141,7 @@ const crush: Record<string, InjuryProfile> = {
         }); }
   },
   "crushed_skull": {
-    "description": "Crushed skull with exposed brain matter and agonal respirations",
+    "description": "Crushed skull with exposed brain matter",
     "triageLogic": function () { return "Expectant"; },
     "vitals": function () { return ({
             pulse: [30, 50],

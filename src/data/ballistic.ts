@@ -24,9 +24,9 @@ const ballistic: Record<string, InjuryProfile> = {
         steth: "Normal"
       };
     },
-    requiredInterventions: ["Direct Pressure", "Emergency Trauma Dressing"],
+    requiredInterventions: ["Emergency Trauma Dressing"],
     getRequiredInterventions: (flags, triage) => {
-      return triage === "Immediate" ? ["Direct Pressure", "Emergency Trauma Dressing"] : [];
+      return triage === "Immediate" ? ["Emergency Trauma Dressing"] : [];
     }
   },
   "tq_upper_leg_arterial": {

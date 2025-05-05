@@ -2,7 +2,7 @@ import { InjuryProfile } from '../types';
 
 const other: Record<string, InjuryProfile> = {
   "decapitation": {
-    "description": "Complete traumatic decapitation at the cervical spine",
+    "description": "Complete traumatic decapitation",
     "triageLogic": function () { return "Expectant"; },
     "vitals": function () { return ({
             pulse: [0, 0],
@@ -50,7 +50,7 @@ const other: Record<string, InjuryProfile> = {
         }); }
   },
   "abrasions_and_sprain": {
-    "description": "Multiple abrasions and ankle sprain from blast shockwave",
+    "description": "Multiple abrasions and ankle sprain; ambulatory",
     "triageLogic": function () { return "Minimal"; },
     "vitals": function () { return ({
             pulse: [85, 95],
@@ -88,7 +88,7 @@ const other: Record<string, InjuryProfile> = {
         }
   },
   "pelvic_fracture": {
-    "description": "Pelvic injury with signs of internal bleeding",
+    "description": "Pelvic injury with distended abdomen and unstable pelvis",
     "requiredInterventions": [
   "Pelvic Binder"
 ],
@@ -117,7 +117,7 @@ const other: Record<string, InjuryProfile> = {
         }
   },
   "bilateral_above_elbow_amputations": {
-    "description": "Bilateral above-elbow amputations with profuse bleeding and no distal perfusion",
+    "description": "Bilateral above-elbow amputations with profuse bleeding",
     "triageLogic": function () { return "Expectant"; },
     "vitals": function () { return ({
             pulse: [140, 160],
@@ -129,7 +129,7 @@ const other: Record<string, InjuryProfile> = {
         }); }
   },
   "bilateral_leg_amputations": {
-    "description": "Bilateral above-knee amputations with signs of hypovolemic shock and altered consciousness",
+    "description": "Bilateral above-knee amputations, unresponsive",
     "triageLogic": function () { return "Expectant"; },
     "vitals": function () { return ({
             pulse: [140, 160],

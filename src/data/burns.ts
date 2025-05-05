@@ -48,7 +48,6 @@ const burns: Record<string, InjuryProfile> = {
       };
     },
     getRequiredInterventions: (flags, triage) => {
-      // Expectant cases may not receive interventions
       return [];
     },
     deterioration: {

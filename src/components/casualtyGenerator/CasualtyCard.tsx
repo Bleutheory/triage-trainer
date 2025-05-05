@@ -70,7 +70,8 @@ const CasualtyCard: FC<CasualtyCardProps> = ({ index, aidBag, removeItem, casual
       broadcast("casualties", updated);
     }
   }, [casualty, index, broadcast]);
-  const [showStabilized, setShowStabilized] = useState(false);
+  // eslint-disable-next-line
+  const [showStabilized, setShowStabilized] = useState(true);
   const baseClass = 'casualty-card';
   const triageClass = casualty.triage
     ? `triage-${casualty.triage.toLowerCase()}`
@@ -185,7 +186,7 @@ const CasualtyCard: FC<CasualtyCardProps> = ({ index, aidBag, removeItem, casual
                       localStorage.setItem("revealedIndexes", JSON.stringify(nextRevealed));
                       broadcast("revealedIndexes", nextRevealed);
 
-                      const note = `${newCasualty.name} added due to excessive vitals requests!`;
+                      const note = `${newCasualty.name} Arrived while you were taking vitals!`;
                       const oldNotes = JSON.parse(localStorage.getItem("notifications") || "[]");
                       const nextNotes = [note, ...oldNotes].slice(0, 10);
                       localStorage.setItem("notifications", JSON.stringify(nextNotes));

@@ -2,7 +2,7 @@ import { InjuryProfile } from '../types';
 
 const penetrating: Record<string, InjuryProfile> = {
   "abdominal_stab_peritonitis": {
-    "description": "Stab wound to abdomen with rigid abdomen and signs of peritonitis",
+    "description": "Stab wound to abdomen with abdomin is distended and rigid",
     "triageLogic": function () { return "Immediate"; },
     "vitals": function () { return ({
             pulse: [115, 135],

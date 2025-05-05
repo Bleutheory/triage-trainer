@@ -8,7 +8,7 @@ export const marchCategories = {
     "Abdominal Emergency Trauma Dressing",
     "Elastic Wrap Bandage - 4 in.",
     "Elastic Wrap Bandage - 6 in.",
-    "F.A.S.T. 1",
+    "Triangular Bandage",
     "Surgical Tape Roll - 1 in."
   ],
   "Airway": [
@@ -23,8 +23,10 @@ export const marchCategories = {
   ],
   "Circulation": [
     "IV Fluid NS",
-    "Pelvic Binder",
-    "Triangular Bandage"
+    "F.A.S.T. 1",
+    "IV Starter Kit",
+    "Blood collection kit",
+    "Pelvic Binder"
   ],
   "Head Injury / Hypothermia": [
     "Emergency Survival Blanket",
@@ -32,7 +34,11 @@ export const marchCategories = {
     "FOX Eye Shield",
     "Cervical Spine Collar"
   ],
-  "PPE & Misc": [
+  "Medication & Misc": [
+    "TXA 1G",
+    "Calcium Gluconate 1G",
+    "Calcium Chloride 1G",
+    "Ketamine 100mg/ml 5ML vial",
     "PPE Kit - Gloves, Mask, Eye Protection",
     "Flexible Adhesive Bandages"
   ]

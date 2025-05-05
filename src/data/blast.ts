@@ -85,7 +85,7 @@ const blast: Record<string, InjuryProfile> = {
     }
   },
   "mine_bka_delayed": {
-    "description": "Below‑knee amputation, TQ applied",
+    "description": "Below‑knee amputation, Hastey TQ applied",
     "triageLogic": function () { return "Delayed"; },
     "vitals": function () { return ({
             pulse: [95, 110],
@@ -100,7 +100,7 @@ const blast: Record<string, InjuryProfile> = {
     }
   },
   "dcbi_tripleamp_immediate": {
-    description: "DCBI, bilat. legs + 1 arm amps, pelvic fx",
+    description: "DCBI, bilat. legs + 1 arm amps",
     triageLogic: function () { return "Immediate"; },
     vitals: function () {
       return {
@@ -125,7 +125,7 @@ const blast: Record<string, InjuryProfile> = {
     }
   },
   "dcbi_tripleamp_delayed": {
-    description: "DCBI, all TQs on, pelvic binder placed",
+    description: "Bilat. leg amputation 2 hastey TQs on, pelvic binder placed",
     triageLogic: function () { return "Delayed"; },
     vitals: function () {
       return {
@@ -144,7 +144,7 @@ const blast: Record<string, InjuryProfile> = {
   },
   
   "cluster_frag_peppering_immediate": {
-    description: "Cluster frag peppering w/ arterial spurter",
+    description: "Left side frag peppering w/ uncontrolled bleeding from the arm",
     triageLogic: function () { return "Immediate"; },
     vitals: function () {
       return {
