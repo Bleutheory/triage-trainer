@@ -2,26 +2,26 @@
 // src/components/casualtyGenerator/casualtyGenerator.ts
 import { v4 as uuid } from 'uuid';
 import { Casualty, Vitals } from '../../types';
-import injuryProfiles from '../../data/injuryProfiles';
+import injuryProfiles from '../../data/index';
 
 function getRandomInRange(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 const ranks = ["PVT", "PV2", "PFC", "SPC", "SGT", "1LT", "CPT", "SSG", "SFC", "2LT"];
-const getUsedKeys = async (): Promise<Set<string>> => {
-  const raw = await window.electronAPI.getItem('usedInjuryKeys');
+const getUsedKeys = (): Set<string> => {
+  const raw = localStorage.getItem('usedInjuryKeys');
   return new Set(raw ? JSON.parse(raw) : []);
 };
 
-const addUsedKey = async (key: string) => {
-  const used = await getUsedKeys();
+const addUsedKey = (key: string) => {
+  const used = getUsedKeys();
   used.add(key);
-  await window.electronAPI.setItem('usedInjuryKeys', JSON.stringify([...used]));
+  localStorage.setItem('usedInjuryKeys', JSON.stringify([...used]));
 };
 
-const resetUsedKeys = async () => {
-  await window.electronAPI.setItem('usedInjuryKeys', null);
+const resetUsedKeys = () => {
+  localStorage.removeItem('usedInjuryKeys');
 };
 const lastNames = ["Smith", "Johnson", "Taylor", "White", "Lee", "Martinez", "Stapleton", "Brown", "Meese", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Wilson", "Anderson", "Thomas", "Hernandez", "Moore", "Martin"];
 
@@ -30,16 +30,16 @@ export function generateName(): string {
 }
 
 
-export async function generateCasualty(): Promise<Casualty> {
-  let usedKeys = await getUsedKeys();
+export function generateCasualty(): Casualty {
+  let usedKeys = getUsedKeys();
   const keys = Object.keys(injuryProfiles).filter(key => !usedKeys.has(key));
   if (keys.length === 0) {
-    await resetUsedKeys();
+    resetUsedKeys();
     usedKeys = new Set();
-    return await generateCasualty();
+    return generateCasualty();
   }
   const randomKey = keys[Math.floor(Math.random() * keys.length)];
-  await addUsedKey(randomKey);
+  addUsedKey(randomKey);
 
   const profile = injuryProfiles[randomKey];
   const state = {
@@ -91,20 +91,10 @@ export async function generateCasualty(): Promise<Casualty> {
   };
 }
 
-export async function generateUniqueCasualties(count: number): Promise<Casualty[]> {
-  const usedRaw = await window.electronAPI.getItem('usedInjuryKeys');
-  const used = new Set<string>(usedRaw ? JSON.parse(usedRaw) : []);
-
+export function generateUniqueCasualties(count: number): Casualty[] {
   const now = Date.now();
-  const keys = Object.keys(injuryProfiles)
-    .filter(k => !used.has(k))
-    .sort(() => 0.5 - Math.random());
-
+  const keys = Object.keys(injuryProfiles).sort(() => 0.5 - Math.random());
   const selected = keys.slice(0, Math.min(count, keys.length));
-  for (const key of selected) {
-    used.add(key);
-  }
-  await window.electronAPI.setItem('usedInjuryKeys', JSON.stringify([...used]));
 
   return selected.map(key => {
     const profile = injuryProfiles[key];
@@ -117,7 +107,7 @@ export async function generateUniqueCasualties(count: number): Promise<Casualty[
     };
 
     const rawVitals = profile.vitals(state);
-    const get = (range: number | [number, number]): number =>
+    const get = (range: any): any =>
       Array.isArray(range) ? getRandomInRange(range[0], range[1]) : range;
 
     const vitals = {
@@ -133,6 +123,7 @@ export async function generateUniqueCasualties(count: number): Promise<Casualty[
       steth: rawVitals.steth
     };
 
+    // Determine triage and interventions dynamically
     const triage = profile.triageLogic(state);
     const requiredInterventions = profile.getRequiredInterventions
       ? profile.getRequiredInterventions(state, triage)
@@ -141,12 +132,12 @@ export async function generateUniqueCasualties(count: number): Promise<Casualty[
     return {
       id: uuid(),
       name: generateName(),
-      injury: profile.description,
       injuryKey: key,
+      injury: profile.description,
       triage: "",
       interventions: [],
       deteriorated: false,
-      requiredInterventions,
+      requiredInterventions: requiredInterventions,
       vitals,
       dynamicVitals: rawVitals,
       startTime: now,

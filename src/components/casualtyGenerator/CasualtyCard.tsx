@@ -60,20 +60,17 @@ const CasualtyCard: FC<CasualtyCardProps> = ({ index, aidBag, removeItem, casual
     const stabilized = normalizedRequired.every(req => normalizedApplied.includes(req));
   
     if (stabilized && casualty.treatmentTime == null) {
-      (async () => {
-        const listStr = await window.electronAPI.getItem("casualties");
-        const list = listStr ? JSON.parse(listStr) : [];
-        const updated = list.map((c: Casualty, i: number) =>
-          i === index
-            ? { ...c, treatmentTime: Math.floor((Date.now() - c.startTime) / 1000) }
-            : c
-        );
-        await window.electronAPI.setItem("casualties", JSON.stringify(updated));
-        broadcast("casualties", updated);
-      })();
+      const list = JSON.parse(localStorage.getItem("casualties") || "[]");
+      const updated = list.map((c: Casualty, i: number) =>
+        i === index
+          ? { ...c, treatmentTime: Math.floor((Date.now() - c.startTime) / 1000) }
+          : c
+      );
+      localStorage.setItem("casualties", JSON.stringify(updated));
+      broadcast("casualties", updated);
     }
   }, [casualty, index, broadcast]);
-
+  const [showStabilized, setShowStabilized] = useState(false);
   const baseClass = 'casualty-card';
   const triageClass = casualty.triage
     ? `triage-${casualty.triage.toLowerCase()}`
@@ -95,14 +92,10 @@ const CasualtyCard: FC<CasualtyCardProps> = ({ index, aidBag, removeItem, casual
   // Reveal logic moved to useEffect below
 
   React.useEffect(() => {
-    const updateRevealed = async () => {
-      const stored = await window.electronAPI.getItem("revealedIndexes");
-      const parsed = stored ? JSON.parse(stored) : [];
-      const updated = Array.from(new Set([...parsed, index]));
-      await window.electronAPI.setItem("revealedIndexes", JSON.stringify(updated));
-      broadcast("revealedIndexes", updated);
-    };
-    updateRevealed();
+    const stored = JSON.parse(localStorage.getItem("revealedIndexes") || "[]") as number[];
+    const updated = Array.from(new Set([...stored, index]));
+    localStorage.setItem("revealedIndexes", JSON.stringify(updated));
+    broadcast("revealedIndexes", updated);
   }, [index, broadcast]);
   
   return (
@@ -170,7 +163,7 @@ const CasualtyCard: FC<CasualtyCardProps> = ({ index, aidBag, removeItem, casual
             {(Object.entries(labelMap) as [keyof Vitals, string][]).map(([key, label]) => (
               <li key={key}>
                 <button
-                  onClick={async () => {
+                  onClick={() => {
                     setVisibleVitals(v => ({ ...v, [key]: true }));
                     const current = Number(localStorage.getItem("penaltyPoints") || 0);
                     localStorage.setItem("penaltyPoints", String(current + 20));
@@ -192,7 +185,7 @@ const CasualtyCard: FC<CasualtyCardProps> = ({ index, aidBag, removeItem, casual
                       localStorage.setItem("revealedIndexes", JSON.stringify(nextRevealed));
                       broadcast("revealedIndexes", nextRevealed);
                       
-                      const note = `${(await newCasualty).name} While you were taking vitals, another casualty arrived.`;
+                      const note = `${newCasualty.name} added due to excessive vitals requests!`;
                       const oldNotes = JSON.parse(localStorage.getItem("notifications") || "[]");
                       const nextNotes = [note, ...oldNotes].slice(0, 10);
                       localStorage.setItem("notifications", JSON.stringify(nextNotes));
@@ -229,21 +222,25 @@ const CasualtyCard: FC<CasualtyCardProps> = ({ index, aidBag, removeItem, casual
         </ul>
       </div>
       <div>
-        <strong>Stabilized:</strong>{" "}
-        {(() => {
-          const required = (casualty.requiredInterventions || []);
-          const normalizedRequired = required.flatMap(req => {
-            const norm = normalizeInterventionName(req);
-            return Array.isArray(norm) ? norm : [norm];
-          });
+      {showStabilized && (
+  <div>
+    <strong>Stabilized:</strong>{" "}
+    {(() => {
+      const required = casualty.requiredInterventions || [];
+      const normalizedRequired = required.flatMap(req => {
+        const norm = normalizeInterventionName(req);
+        return Array.isArray(norm) ? norm : [norm];
+      });
 
-          const normalizedApplied = casualty.interventions.flatMap(i => {
-            const norm = normalizeInterventionName(i.name);
-            return Array.isArray(norm) ? norm : [norm];
-          });
+      const normalizedApplied = casualty.interventions.flatMap(i => {
+        const norm = normalizeInterventionName(i.name);
+        return Array.isArray(norm) ? norm : [norm];
+      });
 
-          return normalizedRequired.every(req => normalizedApplied.includes(req)) ? "Yes" : "No";
-        })()}
+      return normalizedRequired.every(req => normalizedApplied.includes(req)) ? "Yes" : "No";
+    })()}
+  </div>
+)}
       </div>
     </div>
   );

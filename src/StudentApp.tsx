@@ -10,17 +10,17 @@ import AARPage from './components/AARPage/AARPage';
 import PhaseControls from './components/TriageBoard/PhaseControls';
 import './style.css';
 
-const safeGetItem = async (key: string): Promise<string | null> => {
+const safeGetItem = (key: string): string | null => {
   try {
-    return await window.electronAPI.getItem(key);
+    return localStorage.getItem(key);
   } catch {
     return null;
   }
 };
 
-const safeSetItem = async (key: string, value: string): Promise<void> => {
+const safeSetItem = (key: string, value: string): void => {
   try {
-    await window.electronAPI.setItem(key, value);
+    localStorage.setItem(key, value);
   } catch {
     console.warn(`Failed to set localStorage key: ${key}`);
   }
@@ -56,35 +56,36 @@ const StudentApp: FC = () => {
     triageLimit,
   });
 
-  const onStartPacking = async () => {
+  const onStartPacking = () => {
     const end = Date.now() + packDuration * 60000;
-    await safeSetItem('packingEndTime', String(end));
+    safeSetItem('packingEndTime', String(end));
     setPhase('packing');
     broadcast('phase', 'packing');
   };
 
-  const onStartBrief = async () => {
+  const onStartBrief = () => {
     const end = Date.now() + briefDuration * 60000;
-    await safeSetItem('briefEndTime', String(end));
+    safeSetItem('briefEndTime', String(end));
     setPhase('brief');
     broadcast('phase', 'brief');
   };
 
-  const onStartTriage = async () => {
-    const count = Number(await safeGetItem('casualtyCount')) || 15;
-    const list = await generateUniqueCasualties(count);
-    await safeSetItem('casualties', JSON.stringify(list));
-
+  const onStartTriage = () => {
+    const count = Number(safeGetItem('casualtyCount')) || 15;
+    const list = generateUniqueCasualties(count);
+    safeSetItem('casualties', JSON.stringify(list));
+  
     const channel = new BroadcastChannel('triage-updates');
     channel.postMessage({ type: 'casualties', payload: list });
     channel.close();
-
+  
     const now = Date.now();
     const end = now + triageLimit * 60000;
-    await safeSetItem('triageEndTime', String(end));
-    await window.electronAPI.setItem('packingEndTime', null);
-    await window.electronAPI.setItem('briefEndTime', null);
-
+    safeSetItem('triageEndTime', String(end));
+  
+    localStorage.removeItem('packingEndTime');
+    localStorage.removeItem('briefEndTime');
+  
     setPhase('triage');
     broadcast('phase', 'triage');
   };
@@ -94,7 +95,9 @@ const StudentApp: FC = () => {
     broadcast('phase', 'aar');
   };
 
-  const onRestart = async () => {
+  const onRestart = () => {
+    localStorage.clear();
+    broadcast('reset', {});
     const jane = {
       name: 'SPC Jane Doe (Demo)',
       injury: 'Traumatic left leg amputation with severe arterial bleeding',
@@ -110,9 +113,9 @@ const StudentApp: FC = () => {
       isDemo: true,
     };
 
-    await window.electronAPI.setItem('casualties', JSON.stringify([jane]));
-    await window.electronAPI.setItem('revealedIndexes', JSON.stringify([0]));
-    broadcast('reset', {});
+    localStorage.setItem('casualties', JSON.stringify([jane]));
+    localStorage.setItem('revealedIndexes', JSON.stringify([0]));
+
     window.location.reload();
   };
 
@@ -126,7 +129,7 @@ const StudentApp: FC = () => {
         } else {
           delete updated[item];
         }
-        window.electronAPI.setItem("aidBag", JSON.stringify(updated));
+        localStorage.setItem("aidBag", JSON.stringify(updated));
         broadcast("aidBag", updated);
         return updated;
       });

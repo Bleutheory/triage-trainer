@@ -11,15 +11,13 @@ type Phase = 'setup' | 'scenario-brief' | 'triage' | 'aar';
 export default function useScenarioTimer(endTime: number = 0, phase: Phase): string {
   const [timerLabel, setTimerLabel] = useState('--:--');
 
-  // Mark update as async
-  const update = useCallback(async () => {
+  const update = useCallback(() => {
     if (phase !== 'triage') {
       setTimerLabel('--:--');
       return;
     }
-    // New logic: use electronAPI.getItem instead of localStorage.getItem
     const effectiveEndTime = (!endTime || isNaN(endTime))
-      ? Number(await window.electronAPI.getItem("scenarioEndTime"))
+      ? Number(localStorage.getItem("scenarioEndTime"))
       : endTime;
     if (!effectiveEndTime || isNaN(effectiveEndTime)) {
       setTimerLabel('--:--');
@@ -32,13 +30,19 @@ export default function useScenarioTimer(endTime: number = 0, phase: Phase): str
   }, [endTime, phase]);
 
   useEffect(() => {
-    // Call update initially
-    update();
+    update(); // initial render
 
-    // Use async function in setInterval
     const interval = window.setInterval(() => {
-      // Call update (which is async, but we don't need to await here)
-      update();
+      if (phase === 'triage' && (!endTime || isNaN(endTime))) {
+        const fallbackEnd = Number(localStorage.getItem("scenarioEndTime") || 0);
+        if (fallbackEnd) {
+          update();
+        } else {
+          setTimerLabel('--:--');
+        }
+      } else {
+        update();
+      }
     }, 1000);
 
     return () => clearInterval(interval);

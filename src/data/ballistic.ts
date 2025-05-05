@@ -2,7 +2,7 @@ import { InjuryProfile } from '../types';
 
 const ballistic: Record<string, InjuryProfile> = {
   "gsw_abdomen_multiple": {
-    description: "Multiple gunshot wounds to the abdomen with signs of internal bleeding",
+    description: "Multiple gunshot wounds to the abdomen",
     internalBleedChance: 0.7,
     triageLogic: function (flags) {
       return flags.bleeding ? "Immediate" : "Delayed";
@@ -30,7 +30,7 @@ const ballistic: Record<string, InjuryProfile> = {
     }
   },
   "tq_upper_leg_arterial": {
-    description: "Gunshot wound to the upper leg with massive bleeding",
+    description: "Gunshot wound to the upper leg",
     arterialBleedChance: 1,
     triageLogic: function (flags) {
       return flags.arterial ? "Immediate" : "Delayed";
@@ -59,7 +59,7 @@ const ballistic: Record<string, InjuryProfile> = {
   },
 
   "through_and_through_abdomen": {
-  description: "Through-and-through abdominal gunshot wound with bowel evisceration",
+  description: "abdominal gunshot wound with bowel evisceration",
   internalBleedChance: 0.6,
   triageLogic: function (flags) {
     return flags.bleeding ? "Immediate" : "Delayed";
@@ -94,7 +94,7 @@ const ballistic: Record<string, InjuryProfile> = {
 },
 
   "gsw_chest": {
-    description: "Gunshot wound to the chest with difficulty breathing",
+    description: "Gunshot wound to the chest",
     pneumoChance: 0.5,
     triageLogic: function (flags) {
       return flags.pneumo ? "Immediate" : "Delayed";
@@ -157,7 +157,7 @@ const ballistic: Record<string, InjuryProfile> = {
     }
   },
   "gsw_head_critical": {
-    description: "Gunshot wound to the head with exposed brain matter and no response to stimuli",
+    description: "Gunshot wound to the head with exposed brain matter",
     triageLogic: function () { return "Expectant"; },
     vitals: function () {
       return {
@@ -175,7 +175,7 @@ const ballistic: Record<string, InjuryProfile> = {
     }
   },
 "gsw_neck_airway": {
-  description: "Gunshot wound to the neck with gurgling sounds and airway obstruction",
+  description: "Gunshot wound to the neck with frothy bleeding",
   triageLogic: function () { return "Immediate"; },
   vitals: function () {
     return {
@@ -199,7 +199,7 @@ const ballistic: Record<string, InjuryProfile> = {
   }
 },
 "gsw_arm_grazing": {
-  description: "Grazing gunshot wound to the upper arm, superficial bleeding only",
+  description: "Grazing gunshot wound to the upper arm",
   triageLogic: function () { return "Minimal"; },
   vitals: function () {
     return {
@@ -217,7 +217,7 @@ const ballistic: Record<string, InjuryProfile> = {
 },
 
   "gsw_shoulder_plexus": {
-    "description": "Gunshot wound to the shoulder with massive uncontrolled bleeding",
+    "description": "Gunshot wound to the shoulder uncontrolled bleeding",
     "requiredInterventions": [
   "Wound Packing"
 ],
@@ -315,7 +315,7 @@ const ballistic: Record<string, InjuryProfile> = {
 }
   },
 "multiple_penetrating_chest_wounds": {
-  description: "Multiple penetrating chest wounds with massive hemothorax",
+  description: "Multiple penetrating chest wounds",
   triageLogic: function () { return "Expectant"; },
   vitals: function () {
     return {
@@ -333,7 +333,7 @@ const ballistic: Record<string, InjuryProfile> = {
 },
 
   "pack_axillary_gsw": {
-    "description": "Gunshot wound to the left axilla with junctional bleeding",
+    "description": "Gunshot wound to the left axilla",
     "requiredInterventions": [
   "Wound Packing"
 ],
@@ -355,7 +355,7 @@ const ballistic: Record<string, InjuryProfile> = {
 }
   },
   "pack_neck_laceration": {
-    "description": "Deep neck laceration with junctional bleeding, no airway involvement",
+    "description": "Deep neck laceration with massive bleeding",
     "requiredInterventions": [
   "Wound Packing"
 ],
@@ -377,7 +377,7 @@ const ballistic: Record<string, InjuryProfile> = {
 }
   },
   "ndc_single_sided_breathing": {
-    "description": "Gunshot wound with diminished breath sounds, cyanosis",
+    "description": "Gunshot wound to the back with cyanosis",
     "requiredInterventions": [
   "Needle Decompression"
 ],

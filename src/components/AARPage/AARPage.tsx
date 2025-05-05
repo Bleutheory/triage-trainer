@@ -1,39 +1,18 @@
 import React, { useEffect, useState, FC } from 'react';
 import { Casualty } from '../../types';
 
-declare global {
-  interface Window {
-    electronAPI: {
-      getItem: (key: string) => Promise<string | null>;
-      setItem: (key: string, value: string | null) => Promise<void>;
-    };
-  }
-}
-
 const AARPage: FC = () => {
   const [casualties, setCasualties] = useState<Casualty[]>([]);
 
   useEffect(() => {
-    const loadCasualties = async () => {
-      const stored = await window.electronAPI.getItem('casualties');
-      const revealed = await window.electronAPI.getItem('revealedIndexes');
-      if (stored && revealed) {
-        const casualtiesData: Casualty[] = JSON.parse(stored);
-        const revealedIndexes: Set<number> = new Set<number>(JSON.parse(revealed));
-        setCasualties(casualtiesData.filter((_: Casualty, idx: number) => revealedIndexes.has(idx)));
-      }
-    };
-    loadCasualties();
-  }, []);
-
-  useEffect(() => {
-    const saveCasualties = async () => {
-      await window.electronAPI.setItem('casualties', JSON.stringify(casualties));
-    };
-    if (casualties.length > 0) {
-      saveCasualties();
+    const stored = localStorage.getItem('casualties');
+    const revealed = localStorage.getItem('revealedIndexes');
+    if (stored && revealed) {
+      const casualtiesData: Casualty[] = JSON.parse(stored);
+      const revealedIndexes: Set<number> = new Set<number>(JSON.parse(revealed));
+      setCasualties(casualtiesData.filter((_: Casualty, idx: number) => revealedIndexes.has(idx)));
     }
-  }, [casualties]);
+  }, []);
 
   // Helper to format BP field for display
   const formatBP = (bp: string | number | [number, number]): string => {

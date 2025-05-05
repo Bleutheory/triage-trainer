@@ -8,26 +8,19 @@ import { generateCasualty } from '../casualtyGenerator/casualtyGenerator';
 const InstructorDashboard: FC = () => {
   const { setAidBag, broadcast } = useAppContext();
   const [casualties, setCasualties] = useState<Casualty[]>([]);
-  const [scenarioTimeLimit, setScenarioTimeLimit] = useState<number>(20);
-  const [casualtyCount, setCasualtyCount] = useState<number>(15);
-  const [autoReveal, setAutoReveal] = useState<boolean>(true);
-
-  useEffect(() => {
-    const loadSettings = async () => {
-      const timeLimit = await window.electronAPI.getItem("scenarioTimeLimit");
-      const count = await window.electronAPI.getItem("casualtyCount");
-      const reveal = await window.electronAPI.getItem("autoReveal");
-      setScenarioTimeLimit(Number(timeLimit) || 20);
-      setCasualtyCount(Number(count) || 15);
-      setAutoReveal(reveal !== "false");
-    };
-    loadSettings();
-  }, []);
-
+  const [scenarioTimeLimit, setScenarioTimeLimit] = useState(() => {
+    return Number(localStorage.getItem("scenarioTimeLimit")) || 20;
+  });
+  const [casualtyCount, setCasualtyCount] = useState(() => {
+    return Number(localStorage.getItem("casualtyCount")) || 15;
+  });
+  const [autoReveal, setAutoReveal] = useState(() => {
+    return localStorage.getItem("autoReveal") !== "false";
+  });
   const addItem = (item: string) => {
     setAidBag(prev => {
       const updated = { ...prev, [item]: (prev[item] || 0) + 1 };
-      window.electronAPI.setItem("aidBag", JSON.stringify(updated));
+      localStorage.setItem("aidBag", JSON.stringify(updated));
       broadcast("aidBag", updated);
       return updated;
     });
@@ -35,14 +28,11 @@ const InstructorDashboard: FC = () => {
 
 
   useEffect(() => {
-    // Initial load of casualties from secure storage
-    const loadCasualties = async () => {
-      const storedCasualties = await window.electronAPI.getItem('casualties');
-      if (storedCasualties) {
-        setCasualties(JSON.parse(storedCasualties));
-      }
-    };
-    loadCasualties();
+    // Initial load of casualties from localStorage
+    const storedCasualties = localStorage.getItem('casualties');
+    if (storedCasualties) {
+      setCasualties(JSON.parse(storedCasualties));
+    }
     const channel = new BroadcastChannel('triage-updates');
     channel.onmessage = (msg) => {
       if (msg.data?.type === "casualties" && Array.isArray(msg.data.payload)) {
@@ -61,20 +51,20 @@ const InstructorDashboard: FC = () => {
   <button onClick={() => broadcast("phase", "brief")}>Start Brief</button>
   <button onClick={() => broadcast("phase", "triage")}>Start Triage</button>
   <button onClick={() => broadcast("phase", "aar")}>End Scenario</button>
-  <button onClick={async () => {
-    Object.keys(localStorage).forEach(key => window.electronAPI.setItem(key, null));
+  <button onClick={() => {
+    localStorage.clear();
     broadcast("reset", {});
     window.location.reload();
   }}>Reset Everything</button>
 </div>
       <div style={{ marginBottom: "1rem" }}>
         <button
-          onClick={async () => {
-            const stored = await window.electronAPI.getItem('casualties');
+        onClick={() => {
+            const stored = localStorage.getItem('casualties');
             const casualtiesList: Casualty[] = stored ? JSON.parse(stored) : [];
-            const newCasualty = await generateCasualty();
+            const newCasualty = generateCasualty();
             const updatedList = [...casualtiesList, newCasualty];
-            await window.electronAPI.setItem('casualties', JSON.stringify(updatedList));
+            localStorage.setItem('casualties', JSON.stringify(updatedList));
             setCasualties(updatedList);
             broadcast("casualties", updatedList);
           }}
@@ -102,7 +92,7 @@ const InstructorDashboard: FC = () => {
             onChange={e => {
               const value = Number(e.target.value);
               setScenarioTimeLimit(value);
-              window.electronAPI.setItem("scenarioTimeLimit", String(value));
+              localStorage.setItem("scenarioTimeLimit", String(value));
               broadcast("settings", { scenarioTimeLimit: value });
             }}
             min={1}
