@@ -60,7 +60,7 @@ const TriageBoard: FC<TriageBoardProps> = ({
     setCasualties(loaded);
   }, [phase, broadcast]);
 
-  const initialCasualtyCount = Number(localStorage.getItem('casualtyCount')) || 20;
+  const initialCasualtyCount = Number(localStorage.getItem('casualtyCount')) || 40;
   useCasualtyReveal(
     phase,
     initialCasualtyCount,

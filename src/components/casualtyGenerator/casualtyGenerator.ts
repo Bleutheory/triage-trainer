@@ -23,9 +23,10 @@ const addUsedKey = (key: string) => {
 const resetUsedKeys = () => {
   localStorage.removeItem('usedInjuryKeys');
 };
-const lastNames = ["Smith", "Johnson", "Taylor", "White", "Lee", "Martinez", "Stapleton", "Brown", "Meese", "Jones", "Garcia", "Miller", 
+const lastNames = ["Smith", "Johnson", "Taylor", "White", "Holt", "Martinez", "Stapleton", "Brown", "Meese", "Jones", "Garcia", "Miller", 
   "Davis", "Rodriguez", "Wilson", "Anderson", "Thomas", "Hernandez", "Moore", "Martin", "West", "Thompson", "Scott", "Nguyen", "Clark",
-  "Ramirez", "Lewis", "Robinson", "Walker", "Perez", "Hall", "Young", "Allen", "Sanchez", "Wright", "King", "Green", "Baker",];
+  "Ramirez", "Lewis", "Robinson", "Walker", "Perez", "Hall", "Young", "Allen", "Sanchez", "Wright", "King", "Green", "Baker", "Keter", "Dewar",
+"Bathurst"];
 
 export function generateName(): string {
   return `${ranks[Math.floor(Math.random() * ranks.length)]} ${lastNames[Math.floor(Math.random() * lastNames.length)]}`;

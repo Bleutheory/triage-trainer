@@ -71,7 +71,7 @@ const CasualtyCard: FC<CasualtyCardProps> = ({ index, aidBag, removeItem, casual
     }
   }, [casualty, index, broadcast]);
   // eslint-disable-next-line
-  const [showStabilized, setShowStabilized] = useState(true);
+  const [showStabilized, setShowStabilized] = useState(false);
   const baseClass = 'casualty-card';
   const triageClass = casualty.triage
     ? `triage-${casualty.triage.toLowerCase()}`

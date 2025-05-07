@@ -1,18 +1,243 @@
-// src/App.tsx
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import InstructorDashboard from './components/ScenarioBrief/InstructorDashboard';
-import StudentApp from './StudentApp';
 
-const App: React.FC = () => {
+import React, { FC, useState } from 'react';
+import { useAppContext } from './context/AppContext';
+import SetupPhase from './components/SetupPhase/SetupPhase';
+import usePhaseTimer from './hooks/usePhaseTimer';
+import { generateUniqueCasualties } from './components/casualtyGenerator/casualtyGenerator';
+import AidBagSetup from './components/AidBagSetup/AidBagSetup';
+import ScenarioBrief from './components/ScenarioBrief/ScenarioBrief';
+import TriagePhase from './components/casualtyGenerator/TriagePhase';
+import AARPage from './components/AARPage/AARPage';
+import PhaseControls from './components/TriageBoard/PhaseControls';
+import './style.css';
+
+const safeGetItem = (key: string): string | null => {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
+const safeSetItem = (key: string, value: string): void => {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    console.warn(`Failed to set localStorage key: ${key}`);
+  }
+};
+
+const StudentApp: FC = () => {
+  const {
+    packDuration,
+    briefDuration,
+    triageLimit,
+    setPhase,
+    phase,
+    aidBag,
+    notifications,
+    setNotifications,
+    setAidBag,
+    broadcast,
+  } = useAppContext();
+
+  const [casualtyCount, setCasualtyCount] = useState(15);
+  const [scenarioTimeLimit, setScenarioTimeLimit] = useState(20);
+  const [autoReveal, setAutoReveal] = useState(true);
+
+  const hookPhase = (() => {
+    switch (phase) {
+      case 'packing': return 'setup';
+      case 'brief': return 'scenario-brief';
+      case 'triage': return 'triage';
+      case 'aar': return 'aar';
+      default: return 'setup';
+    }
+  })();
+
+  const timerLabel = usePhaseTimer(hookPhase as any, {
+    packDuration,
+    briefDuration,
+    triageLimit,
+  });
+
+  const onStartPacking = () => {
+    const end = Date.now() + packDuration * 60000;
+    safeSetItem('packingEndTime', String(end));
+    setPhase('packing');
+    broadcast('phase', 'packing');
+  };
+
+  const onStartBrief = () => {
+    const end = Date.now() + briefDuration * 60000;
+    safeSetItem('briefEndTime', String(end));
+    setPhase('brief');
+    broadcast('phase', 'brief');
+  };
+// This determines the number of casualties to generate
+  const onStartTriage = () => {
+    const count = casualtyCount;
+    const list = generateUniqueCasualties(count);
+    safeSetItem('casualties', JSON.stringify(list));
+
+    const channel = new BroadcastChannel('triage-updates');
+    channel.postMessage({ type: 'casualties', payload: list });
+    channel.close();
+
+    const now = Date.now();
+    const end = now + triageLimit * 60000;
+    safeSetItem('triageEndTime', String(end));
+
+    localStorage.removeItem('packingEndTime');
+    localStorage.removeItem('briefEndTime');
+
+    setPhase('triage');
+    broadcast('phase', 'triage');
+  };
+
+  const onEndScenario = () => {
+    setPhase('aar');
+    broadcast('phase', 'aar');
+  };
+
+  const onRestart = () => {
+    localStorage.clear();
+    broadcast('reset', {});
+    const jane = {
+      name: 'SPC Jane Doe (Demo)',
+      injury: 'Traumatic left leg amputation with severe arterial bleeding',
+      triage: '',
+      interventions: [],
+      deteriorated: false,
+      requiredInterventions: [],
+      vitals: { pulse: 0, respiratory: 0, bp: '0/0', spo2: 0, airway: '', steth: '' },
+      dynamicVitals: { pulse: 0, respiratory: 0, bp: '0/0', spo2: 0, airway: '', steth: '' },
+      startTime: Date.now(),
+      treatmentTime: null,
+      triageTime: null,
+      isDemo: true,
+    };
+
+    localStorage.setItem('casualties', JSON.stringify([jane]));
+    localStorage.setItem('revealedIndexes', JSON.stringify([0]));
+
+    window.location.reload();
+  };
+
+  const removeItem = React.useCallback((item: string) => {
+    // Defer so we’re OUTSIDE the current render phase
+    setTimeout(() => {
+      setAidBag(prev => {
+        const updated = { ...prev };
+        if (updated[item] > 1) {
+          updated[item]--;
+        } else {
+          delete updated[item];
+        }
+        localStorage.setItem("aidBag", JSON.stringify(updated));
+        broadcast("aidBag", updated);
+        return updated;
+      });
+    }, 0);
+  }, [setAidBag, broadcast]);
+
+  // Show SetupPhase if phase is 'setup'
+  if (phase === 'setup') {
+    return (
+      <SetupPhase
+        casualtyCount={casualtyCount}
+        setCasualtyCount={setCasualtyCount}
+        scenarioTimeLimit={scenarioTimeLimit}
+        setScenarioTimeLimit={setScenarioTimeLimit}
+        autoReveal={autoReveal}
+        setAutoReveal={setAutoReveal}
+        startPackingPhase={() => setPhase('packing')}
+      />
+    );
+  }
+
   return (
-    <Router>
-      <Routes>
-        <Route path="/instructor" element={<InstructorDashboard />} />
-        <Route path="*" element={<StudentApp />} />
-      </Routes>
-    </Router>
+    <div className="app-container">
+      <header className="header-bar">
+        <PhaseControls
+          phase={phase}
+          timerLabel={timerLabel}
+          onStartPacking={onStartPacking}
+          onStartBrief={onStartBrief}
+          onStartTriage={onStartTriage}
+          onEndScenario={onEndScenario}
+          onRestart={onRestart}
+        />
+      </header>
+
+      <div className="content-wrapper">
+        <aside className="sidebar">
+          <h2>Triage Trainer</h2>
+          <nav>
+            <ul>
+              <li>
+                <button onClick={() => setPhase('packing')}>
+                  🧰 Aid Bag Setup
+                </button>
+              </li>
+              <li>
+                <button onClick={() => setPhase('brief')}>
+                  👨‍🏫 View Scenario
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => setPhase('triage')}
+                  disabled={phase === 'triage'}
+                >
+                  🩺 Triage Phase
+                </button>
+              </li>
+              <li>
+                <button onClick={() => setPhase('aar')}>
+                  📊 AAR Summary
+                </button>
+              </li>
+            </ul>
+          </nav>
+
+          <section className="aidbag-snapshot">
+            <h3>🎒 Aid Bag Contents</h3>
+            <ul>
+              {Object.entries(aidBag).map(([item, count]) => (
+                <li
+                  key={item}
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData("text/plain", item);
+                    console.log("Dragging from sidebar:", item);
+                  }}
+                  style={{ cursor: "grab" }}
+                >
+                  {item} x{count}
+                </li>
+              ))}
+            </ul>
+          </section>
+        </aside>
+
+        <main className="main-content">
+          {phase === 'packing' && <AidBagSetup isSetupPhase={true} />}
+          {phase === 'brief' && <ScenarioBrief />}
+          {phase === 'triage' && (
+            <TriagePhase
+              aidBag={aidBag}
+              removeItem={removeItem}
+              notifications={notifications}
+              setNotifications={setNotifications}
+              phase={phase}
+            />
+          )}
+          {phase === 'aar' && <AARPage />}
+        </main>
+      </div>
+    </div>
   );
 };
 
-export default App;
+export default StudentApp;

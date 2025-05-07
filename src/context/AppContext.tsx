@@ -38,7 +38,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   });
 
   const [phase, setPhase] = useState<string>(() => {
-    return localStorage.getItem('phase') || 'idle';
+    return localStorage.getItem('phase') || 'setup';
   });
   // Configurable phase durations (minutes)
   const [packDuration, setPackDuration] = useState<number>(() =>
