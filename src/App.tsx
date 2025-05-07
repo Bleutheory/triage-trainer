@@ -11,14 +11,6 @@ import AARPage from './components/AARPage/AARPage';
 import PhaseControls from './components/TriageBoard/PhaseControls';
 import './style.css';
 
-const safeGetItem = (key: string): string | null => {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-};
-
 const safeSetItem = (key: string, value: string): void => {
   try {
     localStorage.setItem(key, value);
