@@ -193,7 +193,7 @@ const StudentApp: FC = () => {
               </li>
               {/* New "Report Bug" button */}
              <li>
-            <button onClick={() => window.open('https://github.com/Bleutheory/triage-trainer/issues/new?title=What%20is%20wrong%20in%20the%20Triage%20Trainer%20&body=**What%20happened%3F**%0A%0A**What%20were%20you%20doing%20when%20it%20happened%3F**%0A%0A**Anything%20else%20you%20noticed%3F**%0A', '_blank')}>
+            <button onClick={() => window.open('https://docs.google.com/forms/d/e/1FAIpQLScNsBN-wzsuNKoO-MbP_FMNquIimbdKhJq8aAgYfnLDU7Dlig/viewform?usp=header')}>
               🐛 Report Bug
             </button>
           </li>
