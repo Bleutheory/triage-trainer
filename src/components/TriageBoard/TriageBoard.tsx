@@ -27,7 +27,7 @@ const TriageBoard: FC<TriageBoardProps> = ({
   setNotifications,
   phase,
 }) => {
-  const { broadcast, setAidBag } = useAppContext();
+  const { broadcast, setAidBag, triageLimit } = useAppContext(); // Destructure triageLimit here
   const { onRequestResupply, resupplyDisabled } = useResupply();
 
   const timerLabel = useScenarioTimer(
@@ -65,6 +65,7 @@ const TriageBoard: FC<TriageBoardProps> = ({
     phase,
     initialCasualtyCount,
     localStorage.getItem('autoReveal') !== 'false',
+    triageLimit, // Pass triageLimit as the new parameter
     (idx: number) => {
       setRevealedIndexes(prev => {
         const next = Array.from(new Set([...prev, idx]));
