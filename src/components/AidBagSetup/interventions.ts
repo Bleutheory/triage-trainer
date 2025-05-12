@@ -9,7 +9,7 @@ export const marchCategories = {
     "Elastic Wrap Bandage - 4 in.",
     "Elastic Wrap Bandage - 6 in.",
     "Triangular Bandage",
-    "Surgical Tape Roll - 1 in."
+    "Surgical Tape Roll - 3 in."
   ],
   "Airway": [
     "Nasopharyngeal Airway",
@@ -40,7 +40,8 @@ export const marchCategories = {
     "Calcium Chloride 1G",
     "Ketamine 100mg/ml 5ML vial",
     "PPE Kit - Gloves, Mask, Eye Protection",
-    "Flexible Adhesive Bandages"
+    "Flexible Adhesive Bandages",
+    "Samsplint"
   ]
 };
 // src/components/AidBagSetup/interventions.ts
@@ -54,11 +55,12 @@ export function normalizeInterventionName(name: string): string | string[] {
     "Elastic Wrap Bandage - 4 in.": "Direct Pressure",
     "Elastic Wrap Bandage - 6 in.": "Direct Pressure",
     "F.A.S.T. 1": "F.A.S.T. 1",
-    "Surgical Tape Roll - 1 in.": "Surgical Tape Roll - 1 in.",
+    "Surgical Tape Roll - 1 in.": "Surgical Tape Roll - 3 in.",
     "C-A-T® Combat Application Tourniquet": "Tourniquet",
     "Combat Application Tourniquet (C-A-T)": "Tourniquet",
     "Combat Gauze® Z-fold Hemostatic": "Combat Gauze",
     "Wound Pack": ["Compressed Gauze", "Combat Gauze"],
+    "Wound pack": ["Compressed Gauze", "Direct Pressure"],
     "HyFin Chest Seal": "Chest Seal",
     "Chest Seal": "Chest Seal",
     "Needle Decompression Kit (14 GA x 3.25 IN)": "Needle Decompression",

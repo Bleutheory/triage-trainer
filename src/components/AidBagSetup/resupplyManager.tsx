@@ -110,9 +110,9 @@ export const useResupply = () => {
 
     setTimeout(() => {
       const resupplyItems = {
-        "C-A-T® Combat Application Tourniquet": 2,
+        "Combat Application Tourniquet (C-A-T)": 2,
         "Compressed Gauze": 3,
-        "Combat Gauze® Z-fold Hemostatic": 2,
+        "Combat Gauze Hemostatic Dressing": 2,
       };
 
       const updatedBag = { ...aidBag };
