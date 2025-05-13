@@ -1,3 +1,4 @@
+import { storage } from '../utils/storage';
 import React, { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction, useEffect, useRef } from 'react';
 
 interface AppContextProps {
@@ -27,66 +28,64 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const [aidBag, setAidBag] = useState<Record<string, number>>(() => {
-    const stored = localStorage.getItem('aidBag');
-    return stored ? JSON.parse(stored) : {};
-  });
+  const [aidBag, setAidBag] = useState<Record<string, number>>(
+    () => storage.get<Record<string, number>>(storage.KEYS.AID_BAG, {})
+  );
 
-  const [notifications, setNotifications] = useState<string[]>(() => {
-    const stored = localStorage.getItem('notifications');
-    return stored ? JSON.parse(stored) : [];
-  });
+  const [notifications, setNotifications] = useState<string[]>(
+    () => storage.get<string[]>(storage.KEYS.NOTIFICATIONS, [])
+  );
 
-  const [phase, setPhase] = useState<string>(() => {
-    return localStorage.getItem('phase') || 'setup';
-  });
+  const [phase, setPhase] = useState<string>(
+    () => storage.get<string>(storage.KEYS.PHASE, 'setup')
+  );
   // Configurable phase durations (minutes)
-  const [packDuration, setPackDuration] = useState<number>(() =>
-    Number(localStorage.getItem('packDuration')) || 5
+  const [packDuration, setPackDuration] = useState<number>(
+    () => storage.get<number>(storage.KEYS.PACK_DURATION, 5)
   );
-  const [briefDuration, setBriefDuration] = useState<number>(() =>
-    Number(localStorage.getItem('briefDuration')) || 5
+  const [briefDuration, setBriefDuration] = useState<number>(
+    () => storage.get<number>(storage.KEYS.BRIEF_DURATION, 5)
   );
-  const [triageLimit, setTriageLimit] = useState<number>(() =>
-    Number(localStorage.getItem('triageLimit')) || 20
+  const [triageLimit, setTriageLimit] = useState<number>(
+    () => storage.get<number>(storage.KEYS.TRIAGE_LIMIT, 20)
   );
 
   useEffect(() => {
-    localStorage.setItem('aidBag', JSON.stringify(aidBag));
+    storage.set(storage.KEYS.AID_BAG, aidBag);
     channelRef.current?.postMessage({ type: 'aidBag', payload: aidBag });
   }, [aidBag]);
 
   useEffect(() => {
-    localStorage.setItem('notifications', JSON.stringify(notifications));
+    storage.set(storage.KEYS.NOTIFICATIONS, notifications);
     // channelRef.current?.postMessage({ type: 'notifications', payload: notifications });
   }, [notifications]);
 
   useEffect(() => {
-    localStorage.setItem('phase', phase);
+    storage.set(storage.KEYS.PHASE, phase);
     channelRef.current?.postMessage({ type: 'phase', payload: phase });
   }, [phase]);
   
   // Persist and broadcast pack duration
   useEffect(() => {
-    localStorage.setItem('packDuration', String(packDuration));
+    storage.set(storage.KEYS.PACK_DURATION, packDuration);
     channelRef.current?.postMessage({ type: 'settings:packDuration', payload: packDuration });
   }, [packDuration]);
   
   // Persist and broadcast brief duration
   useEffect(() => {
-    localStorage.setItem('briefDuration', String(briefDuration));
+    storage.set(storage.KEYS.BRIEF_DURATION, briefDuration);
     channelRef.current?.postMessage({ type: 'settings:briefDuration', payload: briefDuration });
   }, [briefDuration]);
   
   // Persist and broadcast triage time limit
   useEffect(() => {
-    localStorage.setItem('triageLimit', String(triageLimit));
+    storage.set(storage.KEYS.TRIAGE_LIMIT, triageLimit);
     channelRef.current?.postMessage({ type: 'settings:triageLimit', payload: triageLimit });
   }, [triageLimit]);
 
   useEffect(() => {
     // Ensure initial localStorage value is respected on load
-    const storedPhase = localStorage.getItem("phase");
+    const storedPhase = storage.get<string>(storage.KEYS.PHASE, phase);
     if (storedPhase && storedPhase !== phase) {
       setPhase(storedPhase);
     }

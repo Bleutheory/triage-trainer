@@ -1,3 +1,4 @@
+import { storage } from '../../utils/storage';
 import { Dispatch, SetStateAction } from 'react';
 import { useState, useEffect } from 'react';
 import { Casualty } from '../../types';
@@ -6,19 +7,19 @@ import { v4 as uuid } from 'uuid';
 const MAX_RESUPPLIES = 3;
 
 export function getResupplyCount(): number {
-  return Number(localStorage.getItem('resupplyCount') || 0);
+  return storage.get<number>(storage.KEYS.RESUPPLY_COUNT, 0);
 }
 
 export function isResupplyDisabled(): boolean {
-  return localStorage.getItem('resupplyDisabled') === 'true';
+  return storage.get<boolean>(storage.KEYS.RESUPPLY_DISABLED, false);
 }
 
 export function recordResupplyCount(newCount: number) {
-  localStorage.setItem('resupplyCount', String(newCount));
+  storage.set(storage.KEYS.RESUPPLY_COUNT, newCount);
 }
 
 export function disableResupply() {
-  localStorage.setItem('resupplyDisabled', 'true');
+  storage.set(storage.KEYS.RESUPPLY_DISABLED, true);
 }
 
 export function generateSnuffyCasualty(): Casualty {
@@ -59,11 +60,11 @@ export function shouldTriggerSnuffy(count: number): boolean {
 }
 
 export const useResupply = () => {
-  const [resupplyCount, setResupplyCount] = useState<number>(() => Number(localStorage.getItem('resupplyCount') || 0));
-  const [resupplyDisabled, setResupplyDisabled] = useState<boolean>(() => localStorage.getItem('resupplyDisabled') === 'true');
+  const [resupplyCount, setResupplyCount] = useState<number>(() => storage.get<number>(storage.KEYS.RESUPPLY_COUNT, 0));
+  const [resupplyDisabled, setResupplyDisabled] = useState<boolean>(() => storage.get<boolean>(storage.KEYS.RESUPPLY_DISABLED, false));
   const [resupplyCooldown, setResupplyCooldown] = useState<number>(0);
-  const [snuffyDispatchTime, setSnuffyDispatchTime] = useState<number>(() => Number(localStorage.getItem('snuffyDispatchTime') || 0));
-  const [resupplyCooldownUntil, setResupplyCooldownUntil] = useState<number>(() => Number(localStorage.getItem('resupplyCooldownUntil') || 0));
+  const [snuffyDispatchTime, setSnuffyDispatchTime] = useState<number>(() => storage.get<number>(storage.KEYS.SNUFFY_DISPATCH_TIME, 0));
+  const [resupplyCooldownUntil, setResupplyCooldownUntil] = useState<number>(() => storage.get<number>(storage.KEYS.RESUPPLY_COOLDOWN_UNTIL, 0));
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -102,7 +103,7 @@ export const useResupply = () => {
     }
 
     setSnuffyDispatchTime(now);
-    localStorage.setItem('snuffyDispatchTime', String(now));
+    storage.set(storage.KEYS.SNUFFY_DISPATCH_TIME, now);
     setNotifications((prev: string[]) => [
       "You have sent PVT Snuffy to find some supplies...",
       ...prev
@@ -121,11 +122,11 @@ export const useResupply = () => {
       }
 
       setAidBag(updatedBag);
-      localStorage.setItem("aidBag", JSON.stringify(updatedBag));
+      storage.set(storage.KEYS.AID_BAG, updatedBag);
 
       const newCount = resupplyCount + 1;
       setResupplyCount(newCount);
-      localStorage.setItem('resupplyCount', String(newCount));
+      storage.set(storage.KEYS.RESUPPLY_COUNT, newCount);
 
       let arrivalNotes = Object.entries(resupplyItems).map(
         ([item, qty]) => `${qty} x ${item} has arrived and was added to the aid bag.`
@@ -133,13 +134,13 @@ export const useResupply = () => {
 
       if (newCount > MAX_RESUPPLIES) {
         setResupplyDisabled(true);
-        localStorage.setItem('resupplyDisabled', 'true');
+        storage.set(storage.KEYS.RESUPPLY_DISABLED, true);
 
         const snuffy = generateSnuffyCasualty();
-        const current = JSON.parse(localStorage.getItem('casualties') || '[]');
+        const current = storage.get<Casualty[]>(storage.KEYS.CASUALTIES, []);
         const updated = [...current, snuffy];
         setCasualties(updated);
-        localStorage.setItem("casualties", JSON.stringify(updated));
+        storage.set(storage.KEYS.CASUALTIES, updated);
         arrivalNotes.unshift("PVT Snuffy broke his ankle while retrieving your supplies. He is now a casualty.");
       }
 
@@ -147,7 +148,7 @@ export const useResupply = () => {
 
       const cooldownEnds = Date.now() + 60000;
       setResupplyCooldownUntil(cooldownEnds);
-      localStorage.setItem("resupplyCooldownUntil", String(cooldownEnds));
+      storage.set(storage.KEYS.RESUPPLY_COOLDOWN_UNTIL, cooldownEnds);
 
     }, 60000);
   };

@@ -3,6 +3,7 @@
 import { v4 as uuid } from 'uuid';
 import { Casualty, Vitals } from '../../types';
 import injuryProfiles from '../../data/index';
+import { storage } from '../../utils/storage';
 
 function getRandomInRange(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -10,18 +11,18 @@ function getRandomInRange(min: number, max: number): number {
 
 const ranks = ["PVT", "PV2", "PFC", "SPC", "SGT", "1LT", "CPT", "SSG", "SFC", "2LT"];
 const getUsedKeys = (): Set<string> => {
-  const raw = localStorage.getItem('usedInjuryKeys');
-  return new Set(raw ? JSON.parse(raw) : []);
+  const raw = storage.get<string[]>(storage.KEYS.USED_INJURY_KEYS, []);
+  return new Set(raw);
 };
 
 const addUsedKey = (key: string) => {
   const used = getUsedKeys();
   used.add(key);
-  localStorage.setItem('usedInjuryKeys', JSON.stringify([...used]));
+  storage.set(storage.KEYS.USED_INJURY_KEYS, [...used]);
 };
 
 const resetUsedKeys = () => {
-  localStorage.removeItem('usedInjuryKeys');
+  storage.remove(storage.KEYS.USED_INJURY_KEYS);
 };
 const lastNames = ["Smith", "Johnson", "Taylor", "White", "Holt", "Martinez", "Stapleton", "Brown", "Meese", "Jones", "Garcia", "Miller", 
   "Davis", "Rodriguez", "Wilson", "Anderson", "Thomas", "Hernandez", "Moore", "Martin", "West", "Thompson", "Scott", "Nguyen", "Clark",

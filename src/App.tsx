@@ -9,17 +9,8 @@ import TriagePhase from './components/casualtyGenerator/TriagePhase';
 import AARPage from './components/AARPage/AARPage';
 import PhaseControls from './components/TriageBoard/PhaseControls';
 import './style.css'; // Assuming this is your main application styling
+import { storage } from './utils/storage';
 
-// Helper function for safe localStorage operations
-// This function wraps localStorage.setItem in a try...catch block
-// to prevent errors if localStorage is not available (e.g., in some browsers or environments).
-const safeSetItem = (key: string, value: string): void => {
-  try {
-    localStorage.setItem(key, value);
-  } catch (error) {
-    console.warn(`Failed to set localStorage key: ${key}`, error);
-  }
-};
 
 // Main application component
 const StudentApp: FC = () => {
@@ -68,7 +59,7 @@ const StudentApp: FC = () => {
   // Handler to start the packing phase
   const onStartPacking = () => {
     const end = Date.now() + packDuration * 60000; // Calculate end time in milliseconds
-    safeSetItem('packingEndTime', String(end)); // Save packing phase end time to localStorage
+    storage.set(storage.KEYS.PACKING_END_TIME, end); // Save packing phase end time to localStorage
     setPhase('packing'); // Set the application phase to 'packing'
     broadcast('phase', 'packing'); // Broadcast the phase change to other instances
   };
@@ -76,7 +67,7 @@ const StudentApp: FC = () => {
   // Handler to start the brief phase
   const onStartBrief = () => {
     const end = Date.now() + briefDuration * 60000; // Calculate end time in milliseconds
-    safeSetItem('briefEndTime', String(end)); // Save brief phase end time to localStorage
+    storage.set(storage.KEYS.BRIEF_END_TIME, end); // Save brief phase end time to localStorage
     setPhase('brief'); // Set the application phase to 'brief'
     broadcast('phase', 'brief'); // Broadcast the phase change
   };
@@ -85,7 +76,7 @@ const StudentApp: FC = () => {
   const onStartTriage = () => {
     const count = casualtyCount; // Get the desired number of casualties from local state
     const list = generateUniqueCasualties(count); // Generate a list of unique casualties
-    safeSetItem('casualties', JSON.stringify(list)); // Save the generated casualties to localStorage
+    storage.set(storage.KEYS.CASUALTIES, list); // Save the generated casualties to localStorage
 
     // Use BroadcastChannel to send casualties to other instances (like instructor view)
     const channel = new BroadcastChannel('triage-updates');
@@ -95,11 +86,11 @@ const StudentApp: FC = () => {
     const now = Date.now();
     // Calculate triage end time using the triageLimit from context (set during setup)
     const end = now + triageLimit * 60000; // triageLimit is in minutes, convert to milliseconds
-    safeSetItem('triageEndTime', String(end)); // Save triage phase end time
+    storage.set(storage.KEYS.TRIAGE_END_TIME, end); // Save triage phase end time
 
     // Clean up previous phase end times from localStorage as they are no longer needed
-    localStorage.removeItem('packingEndTime');
-    localStorage.removeItem('briefEndTime');
+    storage.remove(storage.KEYS.PACKING_END_TIME);
+    storage.remove(storage.KEYS.BRIEF_END_TIME);
 
     setPhase('triage'); // Set the application phase to 'triage'
     broadcast('phase', 'triage'); // Broadcast the phase change
@@ -113,7 +104,7 @@ const StudentApp: FC = () => {
 
   // Handler to restart the scenario
   const onRestart = () => {
-    localStorage.clear(); // Clear all data stored in localStorage
+    storage.clearAppData(); // Clear all app data from localStorage
     broadcast('reset', {}); // Broadcast a reset event to other instances
     // Re-initialize with a demo casualty for a clean start example
     // This provides a basic casualty to work with immediately after a reset.
@@ -134,9 +125,9 @@ const StudentApp: FC = () => {
     };
 
     // Set initial casualties with the demo casualty
-    localStorage.setItem('casualties', JSON.stringify([jane]));
+    storage.set(storage.KEYS.CASUALTIES, [jane]);
     // Reveal the demo casualty initially (index 0)
-    localStorage.setItem('revealedIndexes', JSON.stringify([0]));
+    storage.set(storage.KEYS.REVEALED_INDEXES, [0]);
 
     window.location.reload(); // Reload the page to fully reset the application state
   };
@@ -153,7 +144,7 @@ const StudentApp: FC = () => {
         } else {
           delete updated[item]; // Remove the item from the aid bag if only one exists
         }
-        safeSetItem("aidBag", JSON.stringify(updated)); // Save the updated aid bag to localStorage
+        storage.set(storage.KEYS.AID_BAG, updated); // Save the updated aid bag to localStorage
         broadcast("aidBag", updated); // Broadcast the aid bag changes to other instances
         return updated; // Return the updated aid bag state
       });

@@ -1,6 +1,7 @@
 // src/components/TriageBoard/TriageBoard.tsx
 
 import React, { FC, useEffect, useState } from 'react';
+import { storage } from '../../utils/storage';
 import { useAppContext } from '../../context/AppContext';
 import NotificationPanel from './NotificationPanel';
 import CasualtyGrid from '../casualtyGenerator/CasualtyGrid';
@@ -31,7 +32,7 @@ const TriageBoard: FC<TriageBoardProps> = ({
   const { onRequestResupply, resupplyDisabled } = useResupply();
 
   const timerLabel = useScenarioTimer(
-    Number(localStorage.getItem('scenarioEndTime') || 0),
+    storage.get<number>(storage.KEYS.SCENARIO_END_TIME, 0),
     phase as any
   );
   const [secondsLeft, setSecondsLeft] = useState<number>(0);
@@ -43,33 +44,29 @@ const TriageBoard: FC<TriageBoardProps> = ({
   const disableLabel = resupplyButtonDisabled && secondsLeft > 0 ? `${secondsLeft}s` : '';
 
   const [casualties, setCasualties] = useState<Casualty[]>(() => {
-    const stored = localStorage.getItem('casualties');
-    const loaded: Casualty[] = stored ? JSON.parse(stored) : [];
+    const loaded = storage.get<Casualty[]>(storage.KEYS.CASUALTIES, []);
     return [demoCasualty, ...loaded];
   });
 
-  const [revealedIndexes, setRevealedIndexes] = useState<number[]>(() => {
-    const stored = localStorage.getItem('revealedIndexes');
-    return stored ? JSON.parse(stored) : [0];
-  });
+  const [revealedIndexes, setRevealedIndexes] = useState<number[]>(
+    () => storage.get<number[]>(storage.KEYS.REVEALED_INDEXES, [0])
+  );
 
   useEffect(() => {
-    const stored = localStorage.getItem('casualties');
-    if (!stored) return;
-    const loaded: Casualty[] = JSON.parse(stored);
+    const loaded = storage.get<Casualty[]>(storage.KEYS.CASUALTIES, []);
     setCasualties(loaded);
   }, [phase, broadcast]);
 
-  const initialCasualtyCount = Number(localStorage.getItem('casualtyCount')) || 40;
+  const initialCasualtyCount = storage.get<number>(storage.KEYS.CASUALTY_COUNT, 40);
   useCasualtyReveal(
     phase,
     initialCasualtyCount,
-    localStorage.getItem('autoReveal') !== 'false',
+    storage.get<boolean>(storage.KEYS.AUTO_REVEAL, true),
     triageLimit, // Pass triageLimit as the new parameter
     (idx: number) => {
       setRevealedIndexes(prev => {
         const next = Array.from(new Set([...prev, idx]));
-        localStorage.setItem('revealedIndexes', JSON.stringify(next));
+        storage.set(storage.KEYS.REVEALED_INDEXES, next);
         return next;
       });
     }
@@ -80,8 +77,7 @@ const TriageBoard: FC<TriageBoardProps> = ({
     revealedIndexes,
     phase,
     onUpdate: () => {
-      const stored = localStorage.getItem('casualties');
-      const updated = stored ? JSON.parse(stored) : [];
+      const updated = storage.get<Casualty[]>(storage.KEYS.CASUALTIES, []);
       setCasualties(updated);
     },
     onNotify: msg => {
@@ -97,13 +93,12 @@ const TriageBoard: FC<TriageBoardProps> = ({
       const { type, payload } = event.data || {};
       switch (type) {
         case 'phase':
-          localStorage.setItem('phase', payload);
+          storage.set(storage.KEYS.PHASE, payload);
           broadcast('phase', payload);
           window.location.reload();
           break;
         case 'casualties':
-          const stored = localStorage.getItem('casualties');
-          const latest = stored ? JSON.parse(stored) : payload;
+          const latest = storage.get<Casualty[]>(storage.KEYS.CASUALTIES, payload);
           setCasualties(latest);
           break;
         case 'notifications':
@@ -121,16 +116,14 @@ const TriageBoard: FC<TriageBoardProps> = ({
   }, [broadcast, setNotifications]);
 
   useEffect(() => {
-    const storedReveals = localStorage.getItem('revealedIndexes');
-    if (storedReveals) {
-      setRevealedIndexes(JSON.parse(storedReveals));
-    }
+    const reveals = storage.get<number[]>(storage.KEYS.REVEALED_INDEXES, []);
+    setRevealedIndexes(reveals);
   }, [phase]);
 
   const handleAdd = () => {
     const list = [...casualties, generateCasualty()];
     setCasualties(list);
-    localStorage.setItem('casualties', JSON.stringify(list));
+    storage.set(storage.KEYS.CASUALTIES, list);
     broadcast('casualties', list);
   };
 
@@ -160,7 +153,7 @@ const handleApplyItem = (index: number, item: string) => {
     
     updated[index] = cas;
     // Persist and broadcast
-    localStorage.setItem("casualties", JSON.stringify(updated));
+    storage.set(storage.KEYS.CASUALTIES, updated);
     broadcast("casualties", updated);
     return updated;
   });
@@ -173,7 +166,7 @@ const handleApplyItem = (index: number, item: string) => {
     } else {
       delete bag[item];
     }
-    localStorage.setItem("aidBag", JSON.stringify(bag));
+    storage.set(storage.KEYS.AID_BAG, bag);
     broadcast("aidBag", bag);
     return bag;
   });

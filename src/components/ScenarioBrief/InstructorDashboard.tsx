@@ -4,23 +4,24 @@ import { useAppContext } from '../../context/AppContext';
 import { Casualty } from '../../types';
 // @ts-ignore: allow importing JS module without type declarations
 import { generateCasualty } from '../casualtyGenerator/casualtyGenerator';
+import { storage } from '../../utils/storage';
 
 const InstructorDashboard: FC = () => {
   const { setAidBag, broadcast } = useAppContext();
   const [casualties, setCasualties] = useState<Casualty[]>([]);
-  const [scenarioTimeLimit, setScenarioTimeLimit] = useState(() => {
-    return Number(localStorage.getItem("scenarioTimeLimit")) || 20;
-  });
-  const [casualtyCount, setCasualtyCount] = useState(() => {
-    return Number(localStorage.getItem("casualtyCount")) || 15;
-  });
-  const [autoReveal, setAutoReveal] = useState(() => {
-    return localStorage.getItem("autoReveal") !== "false";
-  });
+  const [scenarioTimeLimit, setScenarioTimeLimit] = useState<number>(
+    () => storage.get<number>(storage.KEYS.SCENARIO_TIME_LIMIT, 20)
+  );
+  const [casualtyCount, setCasualtyCount] = useState<number>(
+    () => storage.get<number>(storage.KEYS.CASUALTY_COUNT, 15)
+  );
+  const [autoReveal, setAutoReveal] = useState<boolean>(
+    () => storage.get<boolean>(storage.KEYS.AUTO_REVEAL, true)
+  );
   const addItem = (item: string) => {
     setAidBag(prev => {
       const updated = { ...prev, [item]: (prev[item] || 0) + 1 };
-      localStorage.setItem("aidBag", JSON.stringify(updated));
+      storage.set(storage.KEYS.AID_BAG, updated);
       broadcast("aidBag", updated);
       return updated;
     });
@@ -28,11 +29,9 @@ const InstructorDashboard: FC = () => {
 
 
   useEffect(() => {
-    // Initial load of casualties from localStorage
-    const storedCasualties = localStorage.getItem('casualties');
-    if (storedCasualties) {
-      setCasualties(JSON.parse(storedCasualties));
-    }
+    // Initial load of casualties from storage
+    const loaded = storage.get<Casualty[]>(storage.KEYS.CASUALTIES, []);
+    setCasualties(loaded);
     const channel = new BroadcastChannel('triage-updates');
     channel.onmessage = (msg) => {
       if (msg.data?.type === "casualties" && Array.isArray(msg.data.payload)) {
@@ -52,7 +51,7 @@ const InstructorDashboard: FC = () => {
   <button onClick={() => broadcast("phase", "triage")}>Start Triage</button>
   <button onClick={() => broadcast("phase", "aar")}>End Scenario</button>
   <button onClick={() => {
-    localStorage.clear();
+    storage.clearAppData();
     broadcast("reset", {});
     window.location.reload();
   }}>Reset Everything</button>
@@ -60,11 +59,10 @@ const InstructorDashboard: FC = () => {
       <div style={{ marginBottom: "1rem" }}>
         <button
         onClick={() => {
-            const stored = localStorage.getItem('casualties');
-            const casualtiesList: Casualty[] = stored ? JSON.parse(stored) : [];
+            const casualtiesList = storage.get<Casualty[]>(storage.KEYS.CASUALTIES, []);
             const newCasualty = generateCasualty();
             const updatedList = [...casualtiesList, newCasualty];
-            localStorage.setItem('casualties', JSON.stringify(updatedList));
+            storage.set(storage.KEYS.CASUALTIES, updatedList);
             setCasualties(updatedList);
             broadcast("casualties", updatedList);
           }}
@@ -92,13 +90,13 @@ const InstructorDashboard: FC = () => {
             onChange={e => {
               const value = Number(e.target.value);
               setScenarioTimeLimit(value);
-              localStorage.setItem("scenarioTimeLimit", String(value));
+              storage.set(storage.KEYS.SCENARIO_TIME_LIMIT, value);
               broadcast("settings", { scenarioTimeLimit: value });
             }}
             min={1}
             max={60}
             style={{ width: "60px", marginRight: "1rem" }}
-            disabled={localStorage.getItem("phase") === "triage"}
+            disabled={storage.get<string>(storage.KEYS.PHASE, '') === 'triage'}
           />
         </label>
         <label>
@@ -109,13 +107,13 @@ const InstructorDashboard: FC = () => {
             onChange={e => {
               const value = Number(e.target.value);
               setCasualtyCount(value);
-              localStorage.setItem("casualtyCount", String(value));
+              storage.set(storage.KEYS.CASUALTY_COUNT, value);
               broadcast("settings", { casualtyCount: value });
             }}
             min={1}
             max={50}
             style={{ width: "60px", marginRight: "1rem" }}
-            disabled={localStorage.getItem("phase") === "triage"}
+            disabled={storage.get<string>(storage.KEYS.PHASE, '') === 'triage'}
           />
         </label>
         <label>
@@ -124,7 +122,7 @@ const InstructorDashboard: FC = () => {
             type="checkbox"
             checked={autoReveal}
             onChange={e => setAutoReveal(e.target.checked)}
-            disabled={localStorage.getItem("phase") === "triage"}
+            disabled={storage.get<string>(storage.KEYS.PHASE, '') === 'triage'}
           />
         </label>
       </div>

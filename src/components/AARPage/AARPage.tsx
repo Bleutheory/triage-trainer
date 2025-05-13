@@ -1,17 +1,16 @@
 import React, { useEffect, useState, FC } from 'react';
 import { Casualty } from '../../types';
+import { storage } from '../../utils/storage';
 
 const AARPage: FC = () => {
   const [casualties, setCasualties] = useState<Casualty[]>([]);
 
   useEffect(() => {
-    const stored = localStorage.getItem('casualties');
-    const revealed = localStorage.getItem('revealedIndexes');
-    if (stored && revealed) {
-      const casualtiesData: Casualty[] = JSON.parse(stored);
-      const revealedIndexes: Set<number> = new Set<number>(JSON.parse(revealed));
-      setCasualties(casualtiesData.filter((_: Casualty, idx: number) => revealedIndexes.has(idx)));
-    }
+    // Load stored casualties and revealed indexes using the storage utility
+    const casualtiesData = storage.get<Casualty[]>(storage.KEYS.CASUALTIES, []);
+    const revealedArray = storage.get<number[]>(storage.KEYS.REVEALED_INDEXES, []);
+    const revealedIndexes = new Set<number>(revealedArray);
+    setCasualties(casualtiesData.filter((_, idx) => revealedIndexes.has(idx)));
   }, []);
 
   // Helper to format BP field for display
