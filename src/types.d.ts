@@ -47,12 +47,15 @@ export interface Casualty {
   treatmentTime: number | null;
   triageTime: number | null;
   isDemo: boolean;
+  penaltyPoints?: number;
 }
 
 // Allow CSS imports without type errors
 declare module '*.css';
-declare module '*.module.css';
-
+declare module '*.module.css' {
+  const classes: { [key: string]: string };
+  export default classes;
+}
 // Allow importing these JS modules without type declarations
 declare module '../components/casualtyGenerator/casualtyGenerator' {
   import { Casualty } from './types';
