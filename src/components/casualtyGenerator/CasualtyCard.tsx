@@ -1,4 +1,4 @@
-// @ts-ignore: allow importing CSS modules
+
 import React, { FC, useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Casualty, Vitals } from '../../types';

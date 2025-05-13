@@ -1,4 +1,3 @@
-// @ts-ignore: allow importing CSS modules
 import React, { FC } from 'react';
 
 const ScenarioBrief: FC = () => {

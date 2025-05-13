@@ -1,4 +1,3 @@
-// @ts-ignore: allow importing CSS modules
 // src/components/casualtyGenerator/casualtyGenerator.ts
 import { v4 as uuid } from 'uuid';
 import { Casualty, Vitals } from '../../types';

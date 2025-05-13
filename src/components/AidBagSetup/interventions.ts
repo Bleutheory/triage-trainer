@@ -66,7 +66,7 @@ export function normalizeInterventionName(name: string): string | string[] {
     "Needle Decompression Kit (14 GA x 3.25 IN)": "Needle Decompression",
     "Needle Decompression": "Needle Decompression",
     "Bag-Valve Mask (BVM)": "Bag-Valve Mask",
-    // any other aliases…
+    // add other aliases as students come up with things…
   };
   return aliasMap[name.trim()] || name.trim();
 }

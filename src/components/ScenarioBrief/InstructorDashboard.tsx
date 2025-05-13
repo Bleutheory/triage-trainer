@@ -2,7 +2,6 @@
 import React, { FC, useEffect, useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Casualty } from '../../types';
-// @ts-ignore: allow importing JS module without type declarations
 import { generateCasualty } from '../casualtyGenerator/casualtyGenerator';
 import { storage } from '../../utils/storage';
 

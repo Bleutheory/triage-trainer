@@ -52,3 +52,12 @@ export interface Casualty {
 // Allow CSS imports without type errors
 declare module '*.css';
 declare module '*.module.css';
+
+// Allow importing these JS modules without type declarations
+declare module '../components/casualtyGenerator/casualtyGenerator' {
+  import { Casualty } from './types';
+  export function generateCasualty(): Casualty;
+  export function generateUniqueCasualties(count: number): Casualty[];
+}
+
+declare module '../components/ScenarioBrief/ScenarioBrief';
