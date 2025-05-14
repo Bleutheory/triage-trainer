@@ -65,6 +65,13 @@ const AARPage: FC = () => {
           <div key={c.id}>
             <div className={styles.sectionHeader}>Casualty Identification</div>
             <p>Name: {c.name} | Final Triage: {c.triage}</p>
+                        <div className={styles.sectionHeader}>Primary Condition & Injuries</div>
+            <p>{c.injury}</p>
+            <p className={styles.instructorPrompt}>
+              Why did you decide to place this casualty in the triage category you did?
+              What were the most important factors?
+            </p>
+            
 
             <div className={styles.sectionHeader}>Initial Physiological State</div>
             <ul>
@@ -81,14 +88,10 @@ const AARPage: FC = () => {
                 SpO2: {c.vitals.spo2}
               </li>
             </ul>
-            <p className={styles.instructorPrompt}>
-              Based on these vitals & injuries, what physiological process(es) were occurring?
-              What trajectory was the patient on?
-            </p>
 
-            <div className={styles.sectionHeader}>Primary Condition & Injuries</div>
-            <p>{c.injury}</p>
             <p className={styles.instructorPrompt}>
+              Based on these vitals & injuries, what was going on with this patient?
+              What trajectory was the patient on?
               How do these injuries interact with the vital sign abnormalities above?
             </p>
 
@@ -106,8 +109,8 @@ const AARPage: FC = () => {
                 }) }
               </ul>
               <p className={styles.instructorPrompt}>
-                For each required treatment: Why was it necessary based on the initial state?
-                What was the physiological goal?
+                For each treatment: Why was it necessary based on the initial state?
+                What was the end goal?
               </p>
             </div>
             <div>
@@ -123,8 +126,8 @@ const AARPage: FC = () => {
                 }) }
               </ul>
               <p className={styles.instructorPrompt}>
-                For each applied treatment: Did it address a required physiological need?
-                Was it timely? How would you assess its effectiveness?
+                For each applied treatment: Did it address a required need?
+                How would you assess its effectiveness?
               </p>
             </div>
 
@@ -134,7 +137,7 @@ const AARPage: FC = () => {
               Total Penalty Points: {c.penaltyPoints !== undefined ? c.penaltyPoints : 0}
             </p>
             <p className={styles.instructorPrompt}>
-              How did the interventions (or lack thereof) contribute to this outcome and penalty points?
+              How did the interventions (or lack thereof) contribute to casualty outcome?
             </p>
             <hr />
           </div>
