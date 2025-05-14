@@ -162,10 +162,6 @@ const AARPage: FC = () => {
                   );
                 }) }
               </ul>
-              <p className={styles.instructorPrompt}>
-                For each treatment: Why was it necessary based on the initial state?
-                What was the end goal?
-              </p>
             </div>
             <div>
               <strong>Applied Treatments:</strong>
@@ -180,6 +176,8 @@ const AARPage: FC = () => {
                 }) }
               </ul>
               <p className={styles.instructorPrompt}>
+                For each treatment: Why was it necessary based on the initial state?
+                What was the end goal?
                 For each applied treatment: Did it address a required need?
                 How would you assess its effectiveness?
               </p>

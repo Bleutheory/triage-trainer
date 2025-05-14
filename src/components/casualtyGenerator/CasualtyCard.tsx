@@ -40,17 +40,16 @@ const CasualtyCard: FC<CasualtyCardProps> = ({ index, aidBag, removeItem, casual
     const profile = injuryProfiles[casualty.injury];
     const triage = casualty.triage;
 
-    let required: string[] = [];
-    if (profile?.getRequiredInterventions) {
-      required = profile.getRequiredInterventions(flags, triage);
-    } else {
-      required = profile?.requiredInterventions || [];
-    }
+const rawRequired: (string | string[])[] = profile?.getRequiredInterventions
+  ? profile.getRequiredInterventions(flags, triage)
+  : profile?.requiredInterventions || [];
 
-    const normalizedRequired = required.flatMap(req => {
-      const norm = normalizeInterventionName(req);
-      return Array.isArray(norm) ? norm : [norm];
-    });
+const normalizedRequired: string[] = rawRequired.flatMap((req) =>
+  Array.isArray(req) ? req : [req]
+).flatMap((name) => {
+  const norm = normalizeInterventionName(name);
+  return Array.isArray(norm) ? norm : [norm];
+});
 
     const normalizedApplied = casualty.interventions.flatMap(i => {
       const norm = normalizeInterventionName(i.name);
@@ -229,7 +228,7 @@ const CasualtyCard: FC<CasualtyCardProps> = ({ index, aidBag, removeItem, casual
             {(() => {
               const required = casualty.requiredInterventions || [];
               const normalizedRequired = required.flatMap(req => {
-                const norm = normalizeInterventionName(req);
+                const norm = typeof req === 'string' ? normalizeInterventionName(req) : req;
                 return Array.isArray(norm) ? norm : [norm];
               });
 
