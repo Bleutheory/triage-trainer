@@ -14,6 +14,8 @@ export interface Vitals {
   steth: string;
 }
 
+export type InterventionName = string; // For clarity
+
 export interface InjuryProfile {
   description: string;
   triageLogic: (flags: Record<string, boolean>) => string;
@@ -26,10 +28,10 @@ export interface InjuryProfile {
   amsChance?: number;
 
   /** Static fallback if dynamic not defined */
-  requiredInterventions?: string[];
+  requiredInterventions?: (InterventionName | InterventionName[])[];
 
   /** Optional dynamic generator: gets priority over static if defined */
-  getRequiredInterventions?: (flags: Record<string, boolean>, triage: string) => string[];
+  getRequiredInterventions?: (flags: Record<string, boolean>, triage: string) => (InterventionName | InterventionName[])[];
 }
 
 export interface Casualty {
@@ -38,9 +40,9 @@ export interface Casualty {
   injuryKey: string;
   injury: string;
   triage: string;
-  interventions: Intervention[];
+  interventions: Intervention[]; // This is the applied interventions
   deteriorated: boolean;
-  requiredInterventions: string[];
+  requiredInterventions: (InterventionName | InterventionName[])[]; // This will store the output of getRequiredInterventions
   vitals: Vitals;
   dynamicVitals?: ReturnType<InjuryProfile["vitals"]>;
   startTime: number;
@@ -48,6 +50,7 @@ export interface Casualty {
   triageTime: number | null;
   isDemo: boolean;
   penaltyPoints?: number;
+  // appliedInterventions?: InterventionName[]; // Consider if you need a separate list of normalized applied interventions
 }
 
 // Allow CSS imports without type errors
