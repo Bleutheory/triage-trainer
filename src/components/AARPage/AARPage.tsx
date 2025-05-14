@@ -1,6 +1,7 @@
 import React, { useEffect, useState, FC } from 'react';
 import { Casualty } from '../../types';
 import { storage } from '../../utils/storage';
+//@ts-ignore
 import styles from './AARPage.module.css';
 const AARPage: FC = () => {
   const [casualties, setCasualties] = useState<Casualty[]>([]);

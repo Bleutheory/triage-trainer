@@ -52,6 +52,7 @@ export interface Casualty {
 
 // Allow CSS imports without type errors
 declare module '*.css';
+// filepath: /Users/aaronbleuer/Desktop/Triage trainer app/Triage_trainer_V8/triage-trainer/src/global.d.ts
 declare module '*.module.css' {
   const classes: { [key: string]: string };
   export default classes;

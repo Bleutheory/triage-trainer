@@ -58,12 +58,17 @@ const TriageBoard: FC<TriageBoardProps> = ({
   }, [phase, broadcast]);
 
   const initialCasualtyCount = storage.get<number>(storage.KEYS.CASUALTY_COUNT, 40);
+
+  // *** ADDED CONSOLE LOG HERE ***
+  console.log('[TriageBoard] triageLimit from context (minutes):', triageLimit);
+
   useCasualtyReveal(
     phase,
     initialCasualtyCount,
     storage.get<boolean>(storage.KEYS.AUTO_REVEAL, true),
     triageLimit, // Pass triageLimit as the new parameter
     (idx: number) => {
+      console.log(`[TriageBoard] revealCallback called for index: ${idx}`);
       setRevealedIndexes(prev => {
         const next = Array.from(new Set([...prev, idx]));
         storage.set(storage.KEYS.REVEALED_INDEXES, next);
