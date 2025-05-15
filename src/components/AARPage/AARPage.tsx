@@ -1,10 +1,17 @@
 import React, { useEffect, useState, FC } from 'react';
+// import { useParams, Link } from 'react-router-dom'; // Assuming Link might be used for a back button
 import { Casualty } from '../../types';
 import { storage } from '../../utils/storage';
+import { normalizeInterventionName } from '../AidBagSetup/interventions'; // Adjust path if not correct
 //@ts-ignore
 import styles from './AARPage.module.css';
+
 const AARPage: FC = () => {
   const [casualties, setCasualties] = useState<Casualty[]>([]);
+
+  const handlePrint = () => {
+    window.print();
+  };
 
   useEffect(() => {
     // Load stored casualties and revealed indexes using the storage utility
@@ -74,8 +81,15 @@ const AARPage: FC = () => {
   };
 
   return (
-    <section>
-      <h2>After Action Review</h2>
+    <section className={styles.aarPageContainer}>
+      <div className={styles.navigationControls}>
+        {/* Example Back Button - uncomment and adjust if you have routing for it */}
+        {/* <Link to="/scenarios" className={styles.backButton}>Back to Scenarios</Link> */}
+        <button onClick={handlePrint} className={styles.printButton}>
+          Export AAR (Print to PDF)
+        </button>
+      </div>
+      <h2 className={styles.aarTitle}>After Action Review</h2>
       {casualties.filter(c => !c.isDemo).map((c) => {
         // Helper to check abnormal vitals (accepts tuples)
         const shockIndex = typeof c.vitals.pulse === 'number' 
@@ -98,7 +112,7 @@ const AARPage: FC = () => {
         };
 
         return (
-          <div key={c.id}>
+          <div key={c.id} className={styles.casualtyCard}>
             <div className={styles.sectionHeader}>Casualty Identification</div>
             <p>Name: {c.name} | Final Triage: {c.triage}</p>
                         <div className={styles.sectionHeader}>Primary Condition & Injuries</div>
@@ -154,7 +168,9 @@ const AARPage: FC = () => {
                         ? [c.requiredInterventions]
                         : [])
                   ).map((req, idx) => {
-                  const met = c.interventions.some(i => i.name === req);
+                  // Normalize applied intervention names before comparison
+                  // Assumes 'req' from c.requiredInterventions is already normalized
+                  const met = c.interventions.some(i => normalizeInterventionName(i.name) === req);
                   return (
                     <li key={`req-${c.id}-${idx}`} className={ met ? styles.treatmentMet : styles.treatmentMissed }>
                       {req} { met ? '(applied)' : '(missed)' }
@@ -167,10 +183,13 @@ const AARPage: FC = () => {
               <strong>Applied Treatments:</strong>
               <ul>
                 { c.interventions.map((appl, idx) => {
-                  const expected = (c.requiredInterventions || []).some(req => req === appl.name);
+                  // Normalize the applied intervention name before checking if it's expected
+                  // Assumes 'req' from c.requiredInterventions is already normalized
+                  const normalizedAppliedName = normalizeInterventionName(appl.name);
+                  const expected = (Array.isArray(c.requiredInterventions) ? c.requiredInterventions.flat() : (c.requiredInterventions && typeof c.requiredInterventions === 'string' ? [c.requiredInterventions] : [])).some(req => req === normalizedAppliedName);
                   return (
                     <li key={`appl-${c.id}-${idx}`} className={ expected ? styles.treatmentMet : styles.treatmentUnexpected }>
-                      {appl.name} { expected ? '' : '(unexpected)' }
+                      {appl.name} ({normalizedAppliedName}) { expected ? '' : '(unexpected)' }
                     </li>
                   );
                 }) }

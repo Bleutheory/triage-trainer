@@ -49,25 +49,28 @@ export function normalizeInterventionName(name: string): string | string[] {
   const aliasMap: Record<string, string | string[]> = {
     "Combat Gauze Hemostatic Dressing": "Combat Gauze",
     "Compressed Gauze": "Compressed Gauze",
-    "Emergency Trauma Dressing - 4 in.": "Emergency Trauma Dressing",
-    "Emergency Trauma Dressing": "Emergency Trauma Dressing",
-    "Abdominal Emergency Trauma Dressing": "Emergency Trauma Dressing",
-    "Elastic Wrap Bandage - 4 in.": "Direct Pressure",
-    "Elastic Wrap Bandage - 6 in.": "Direct Pressure",
+    "Emergency Trauma Dressing - 4 in.": "Pressure Dressing",
+    "Emergency Trauma Dressing": "Pressure Dressing",
+    "Abdominal Emergency Trauma Dressing": "Pressure Dressing",
+    "Elastic Wrap Bandage - 4 in.": "Pressure Dressing",
+    "Elastic Wrap Bandage - 6 in.": "Pressure Dressing",
     "F.A.S.T. 1": "F.A.S.T. 1",
     "Surgical Tape Roll - 1 in.": "Surgical Tape Roll - 3 in.",
     "C-A-T® Combat Application Tourniquet": "Tourniquet",
     "Combat Application Tourniquet (C-A-T)": "Tourniquet",
     "Combat Gauze® Z-fold Hemostatic": "Combat Gauze",
-    "Wound Pack": ["Compressed Gauze", "Combat Gauze"],
-    "Wound pack": ["Compressed Gauze", "Direct Pressure"],
+    "Wound Pack": ["Compressed Gauze", "Combat Gauze"], // Standardized
+    "Wound pack": "Compressed Gauze", // Standardized
     "HyFin Chest Seal": "Chest Seal",
     "Chest Seal": "Chest Seal",
     "Needle Decompression Kit (14 GA x 3.25 IN)": "Needle Decompression",
     "Needle Decompression": "Needle Decompression",
     "Bag-Valve Mask (BVM)": "Bag-Valve Mask",
-    "Triangular Bandage": ["Direct Pressure", "Tourniquet"], // Can be used for pressure or as an improvised tourniquet
-    "Belt": "Tourniquet"     // Improvised tourniquet using a belt
+    "Triangular Bandage": ["Pressure Dressing", "Tourniquet"],
+    "Belt": "Tourniquet",
+    "Cric": "CRICKIT", // Added for consistency
+    "Wound Packing": ["Compressed Gauze", "Combat Gauze"], // Added for consistency
+    "ETD": "Pressure Dressing" // Changed from Emergency Trauma Dressing
     // add other aliases as students come up with things…
   };
   return aliasMap[name.trim()] || name.trim();

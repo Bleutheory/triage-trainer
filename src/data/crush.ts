@@ -104,7 +104,7 @@ const crush: Record<string, InjuryProfile> = {
   "babt_chest_immediate": {
     "description": "BABT chest contusion w/ resp distress",
     "requiredInterventions": [
-  "Needle Decompression Kit (14 GA x 3.25 IN)"
+  "Needle Decompression"
 ],
     "triageLogic": function () { return "Immediate"; },
     "vitals": function () { return ({

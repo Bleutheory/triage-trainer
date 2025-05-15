@@ -5,8 +5,8 @@ const burns: Record<string, InjuryProfile> = {
     description: "Burns to the face",
     requiredInterventions: [],
     getRequiredInterventions: function (_a) {
-      var airway = _a.airway;
-      return airway ? ["Cric"] : [];
+      var airway = _a.airway; // Cric is CRICKIT
+      return airway ? ["CRICKIT"] : [];
     },
     airwayCompromiseChance: 0.4,
     triageLogic: function (_a) {
@@ -116,7 +116,7 @@ const burns: Record<string, InjuryProfile> = {
   "cric_burn_airway": {
     description: "Facial burns with soot in oropharynx and stridor",
     getRequiredInterventions: (flags, triage) => {
-      return triage === "Immediate" ? ["Cric"] : [];
+      return triage === "Immediate" ? ["CRICKIT"] : [];
     },
     triageLogic: function () { return "Immediate"; },
     vitals: function () {

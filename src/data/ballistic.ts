@@ -24,9 +24,9 @@ const ballistic: Record<string, InjuryProfile> = {
         steth: "Normal"
       };
     },
-    requiredInterventions: ["Emergency Trauma Dressing"],
+    requiredInterventions: ["Pressure Dressing"],
     getRequiredInterventions: (flags, triage) => {
-      return triage === "Immediate" ? ["Emergency Trauma Dressing"] : [];
+      return triage === "Immediate" ? ["Pressure Dressing"] : [];
     }
   },
   "tq_upper_leg_arterial": {
@@ -188,7 +188,7 @@ const ballistic: Record<string, InjuryProfile> = {
     };
   },
   getRequiredInterventions: (flags, triage) => {
-    return triage === "Immediate" ? ["Cric"] : [];
+    return triage === "Immediate" ? ["CRICKIT"] : [];
   },
   deterioration: {
     pulse: 10,
@@ -219,7 +219,7 @@ const ballistic: Record<string, InjuryProfile> = {
   "gsw_shoulder_plexus": {
     "description": "Gunshot wound to the shoulder uncontrolled bleeding",
     "requiredInterventions": [
-  "Wound Packing"
+  "Wound Pack"
 ],
     "arterialBleedChance": 0.5,
     "triageLogic": function (_a) {
@@ -266,14 +266,14 @@ const ballistic: Record<string, InjuryProfile> = {
     };
   },
   getRequiredInterventions: (flags, triage) => {
-    return triage === "Delayed" ? ["ETD"] : [];
+    return triage === "Delayed" ? ["Pressure Dressing"] : [];
   }
 },
 
   "junctional_groin_bleed": {
     "description": "Gunshot wound to the groin with arterial bleeding",
     "requiredInterventions": [
-  "Wound Packing"
+  "Wound Pack"
 ],
     "triageLogic": function () { return "Immediate"; },
     "vitals": function () { return ({
@@ -295,7 +295,7 @@ const ballistic: Record<string, InjuryProfile> = {
   "junctional_axilla_bleed": {
     "description": "Shrapnel wound to axilla with uncontrolled bleeding",
     "requiredInterventions": [
-  "Wound Packing"
+  "Wound Pack"
 ],
     "triageLogic": function () { return "Immediate"; },
     "vitals": function () { return ({
@@ -335,7 +335,7 @@ const ballistic: Record<string, InjuryProfile> = {
   "pack_axillary_gsw": {
     "description": "Gunshot wound to the left axilla",
     "requiredInterventions": [
-  "Wound Packing"
+  "Wound Pack"
 ],
     "triageLogic": function () { return "Immediate"; },
     "vitals": function () { return ({
@@ -357,7 +357,7 @@ const ballistic: Record<string, InjuryProfile> = {
   "pack_neck_laceration": {
     "description": "Deep neck laceration with massive bleeding",
     "requiredInterventions": [
-  "Wound Packing"
+  "Wound Pack"
 ],
     "triageLogic": function () { return "Immediate"; },
     "vitals": function () { return ({
@@ -447,7 +447,7 @@ const ballistic: Record<string, InjuryProfile> = {
     "description": "Pelvic EFP wound, arterial bleed",
     "requiredInterventions": [
   "Pelvic Binder",
-  "Wound Packing"
+  "Wound Pack"
 ],
     "triageLogic": function () { return "Immediate"; },
     "vitals": function () { return ({
@@ -474,14 +474,14 @@ const ballistic: Record<string, InjuryProfile> = {
       };
     },
     getRequiredInterventions: (flags, triage) => {
-      return triage === "Delayed" ? ["Pelvic Binder", "Wound Packing"] : [];
+      return triage === "Delayed" ? ["Pelvic Binder", "Wound Pack"] : [];
     }
   },
   
   "babt_chest_immediate": {
     "description": "BABT chest contusion w/ resp distress",
     "requiredInterventions": [
-  "Needle Decompression Kit (14 GA x 3.25 IN)"
+  "Needle Decompression"
 ],
     "triageLogic": function () { return "Immediate"; },
     "vitals": function () { return ({

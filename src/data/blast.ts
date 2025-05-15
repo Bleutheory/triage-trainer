@@ -24,9 +24,9 @@ const blast: Record<string, InjuryProfile> = {
         steth: "Normal"
       };
     },
-    requiredInterventions: [["Tourniquet", "Direct Pressure"]], // Example of static OR
+    requiredInterventions: [["Tourniquet", "Pressure Dressing"]], // Example of static OR
     getRequiredInterventions: (flags, triage) => {
-      return triage === "Immediate" ? [["Tourniquet", "Direct Pressure"]] : []; // Tourniquet OR Wound Packing
+      return triage === "Immediate" ? [["Tourniquet", "Pressure Dressing"]] : []; // Tourniquet OR Pressure Dressing
     },
     deterioration: {
       pulse: 20,
