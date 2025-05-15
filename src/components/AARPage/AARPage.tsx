@@ -159,7 +159,7 @@ const AARPage: FC = () => {
 
             <div className={styles.sectionHeader}>Intervention Rationale & Execution</div>
             <div>
-              <strong>Required Treatments:</strong>
+              <strong>Recomended Treatments:</strong>
               <ul>
                 { (
                     Array.isArray(c.requiredInterventions)
