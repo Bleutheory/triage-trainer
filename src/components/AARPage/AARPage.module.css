@@ -1,4 +1,4 @@
-.sectionHeader {
+ .sectionHeader {
    margin-top: 1.5rem;
    font-size: 1.25rem;
    font-weight: bold;
@@ -97,7 +97,7 @@
 @media print {
   body {
     -webkit-print-color-adjust: exact !important; /* Chrome, Safari, Edge */
-    print-color-adjust: exact !important; /* Standard */
+    color-adjust: exact !important; /* Standard */
   }
 
   /* Hide everything by default for printing */
