@@ -1,4 +1,3 @@
-
 import React, { FC, useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Casualty, Vitals } from '../../types';
@@ -226,9 +225,11 @@ const normalizedRequired: string[] = rawRequired.flatMap((req) =>
           <div>
             <strong>Stabilized:</strong>{" "}
             {(() => {
-              const required = casualty.requiredInterventions || [];
-              const normalizedRequired = required.flatMap(req => {
-                const norm = typeof req === 'string' ? normalizeInterventionName(req) : req;
+              const rawRequired: (string | string[])[] = casualty.requiredInterventions || [];
+              const normalizedRequired: string[] = rawRequired.flatMap((req) =>
+                Array.isArray(req) ? req : [req]
+              ).flatMap((name) => {
+                const norm = normalizeInterventionName(name);
                 return Array.isArray(norm) ? norm : [norm];
               });
 
